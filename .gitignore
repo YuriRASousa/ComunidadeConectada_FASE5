@@ -1,0 +1,26 @@
+# Dependências e builds
+node_modules/
+.expo/
+.expo-shared/
+dist/
+build/
+target/
+.angular/
+
+# Credenciais e dados sensíveis — NUNCA versionar
+**/config/firebase-service-account.json
+*.env
+.env.*
+
+# Backend — banco H2 legado (o backend atual usa Firebase)
+backend/smarthas-api/data/
+
+# Docs — dependências do script de geração de PDF/PPTX e assets intermediários
+docs/node_modules/
+docs/pptx_assets/
+docs/*.jpg
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log

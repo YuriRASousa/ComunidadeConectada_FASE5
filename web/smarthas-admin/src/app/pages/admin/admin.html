@@ -1,0 +1,185 @@
+<div class="admin-page">
+  <nav class="top-nav">
+    <span class="brand">Smart HAS — Painel Admin</span>
+    <div class="nav-links">
+      <a routerLink="/home">Início</a>
+      <span class="user-badge" *ngIf="authService.currentUser() as u">
+        {{ u.name }}
+        <span class="admin-tag" *ngIf="authService.isAdmin()">ADMIN</span>
+      </span>
+      <button class="logout-btn" (click)="logout()">Sair</button>
+    </div>
+  </nav>
+
+  <main class="content">
+    <!-- ===================== STATS ===================== -->
+    <section class="panel">
+      <h2>Estatísticas</h2>
+
+      <p *ngIf="statsLoading">Carregando...</p>
+      <div class="error-banner" *ngIf="statsError">{{ statsError }}</div>
+
+      <div class="stats-grid" *ngIf="!statsLoading && stats">
+        <div class="stat-card">
+          <span class="stat-value">{{ stats.totalUsers }}</span>
+          <span class="stat-label">Usuários</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">{{ stats.totalResources }}</span>
+          <span class="stat-label">Recursos</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">{{ stats.totalMessages }}</span>
+          <span class="stat-label">Mensagens</span>
+        </div>
+      </div>
+
+      <div class="category-breakdown" *ngIf="!statsLoading && stats">
+        <h3>Recursos por categoria</h3>
+        <ul *ngIf="categoryEntries(stats.resourcesByCategory).length > 0; else noCategoryData">
+          <li *ngFor="let entry of categoryEntries(stats.resourcesByCategory)">
+            <span class="category-name">{{ entry.key }}</span>
+            <span class="category-count">{{ entry.value }}</span>
+          </li>
+        </ul>
+        <ng-template #noCategoryData>
+          <p class="empty-state">Nenhuma categoria com recursos ainda.</p>
+        </ng-template>
+      </div>
+    </section>
+
+    <!-- ===================== USERS ===================== -->
+    <section class="panel">
+      <h2>Usuários</h2>
+
+      <p *ngIf="usersLoading">Carregando...</p>
+      <div class="error-banner" *ngIf="usersError">{{ usersError }}</div>
+
+      <table class="data-table" *ngIf="!usersLoading && users.length > 0">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>E-mail</th>
+            <th>Reputação</th>
+            <th>Verificado</th>
+            <th>Papel</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of users">
+            <td>{{ user.name }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.reputation | number: '1.1-1' }}</td>
+            <td>
+              <span *ngIf="user.isVerified" class="badge badge-ok">Sim</span>
+              <span *ngIf="!user.isVerified" class="badge badge-muted">Não</span>
+            </td>
+            <td>
+              <span class="badge" [class.badge-admin]="user.role === 'ADMIN'">{{ user.role }}</span>
+            </td>
+            <td>
+              <button class="danger-btn" (click)="deleteUser(user)">Excluir</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="empty-state" *ngIf="!usersLoading && users.length === 0 && !usersError">
+        Nenhum usuário encontrado.
+      </p>
+    </section>
+
+    <!-- ===================== RESOURCES ===================== -->
+    <section class="panel">
+      <h2>Recursos</h2>
+
+      <p *ngIf="resourcesLoading">Carregando...</p>
+      <div class="error-banner" *ngIf="resourcesError">{{ resourcesError }}</div>
+
+      <table class="data-table" *ngIf="!resourcesLoading && resources.length > 0">
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Categoria</th>
+            <th>Tipo</th>
+            <th>Disponibilidade</th>
+            <th>Ofertante</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let resource of resources">
+            <td>{{ resource.title }}</td>
+            <td>{{ resource.category }}</td>
+            <td>{{ resource.type }}</td>
+            <td>{{ resource.availability }}</td>
+            <td>{{ resource.offerantName }}</td>
+            <td>
+              <button class="danger-btn" (click)="deleteResource(resource)">Excluir</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="empty-state" *ngIf="!resourcesLoading && resources.length === 0 && !resourcesError">
+        Nenhum recurso encontrado.
+      </p>
+    </section>
+
+    <!-- ===================== CREATE RESOURCE ===================== -->
+    <section class="panel">
+      <h2>Novo recurso</h2>
+
+      <form class="resource-form" (ngSubmit)="createResource()" #resourceForm="ngForm">
+        <label for="title">Título</label>
+        <input
+          id="title"
+          name="title"
+          type="text"
+          [(ngModel)]="newResource.title"
+          required
+        />
+
+        <label for="description">Descrição</label>
+        <textarea
+          id="description"
+          name="description"
+          rows="3"
+          [(ngModel)]="newResource.description"
+          required
+        ></textarea>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="category">Categoria</label>
+            <select id="category" name="category" [(ngModel)]="newResource.category">
+              <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="condition">Condição</label>
+            <select id="condition" name="condition" [(ngModel)]="newResource.condition">
+              <option *ngFor="let c of conditions" [value]="c">{{ c }}</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="type">Tipo</label>
+            <select id="type" name="type" [(ngModel)]="newResource.type">
+              <option *ngFor="let t of types" [value]="t">{{ t }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="error-banner" *ngIf="createError">{{ createError }}</div>
+        <div class="success-banner" *ngIf="createSuccess">{{ createSuccess }}</div>
+
+        <button type="submit" [disabled]="createLoading || resourceForm.invalid">
+          {{ createLoading ? 'Criando...' : 'Criar recurso' }}
+        </button>
+      </form>
+    </section>
+  </main>
+</div>

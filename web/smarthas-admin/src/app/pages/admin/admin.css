@@ -1,0 +1,266 @@
+.admin-page {
+  min-height: 100vh;
+  background: #f2f4f3;
+}
+
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  background: #14532d;
+  color: #fff;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-links a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.nav-links a:hover {
+  text-decoration: underline;
+}
+
+.user-badge {
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-tag {
+  background: #f2b705;
+  color: #333;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.logout-btn {
+  background: transparent;
+  border: 1px solid #fff;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.content {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.panel {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.panel h2 {
+  margin-top: 0;
+  color: #14532d;
+  font-size: 1.15rem;
+}
+
+.stats-grid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 120px;
+  background: #eef7f1;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1f6f54;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.category-breakdown ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+
+.category-breakdown li {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+.category-count {
+  font-weight: 600;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.data-table th,
+.data-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 0.88rem;
+}
+
+.data-table th {
+  color: #555;
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  background: #eee;
+  color: #444;
+}
+
+.badge-ok {
+  background: #e1f4e6;
+  color: #1f6f54;
+}
+
+.badge-muted {
+  background: #f2f2f2;
+  color: #888;
+}
+
+.badge-admin {
+  background: #fdf1d0;
+  color: #8a6300;
+}
+
+.danger-btn {
+  background: #fdecea;
+  color: #b3261e;
+  border: 1px solid #f5c2bd;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.danger-btn:hover {
+  background: #f9d5d1;
+}
+
+.empty-state {
+  color: #888;
+  font-style: italic;
+  margin: 8px 0 0;
+}
+
+.error-banner {
+  background: #fdecea;
+  color: #b3261e;
+  border: 1px solid #f5c2bd;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin: 8px 0;
+}
+
+.success-banner {
+  background: #e1f4e6;
+  color: #1f6f54;
+  border: 1px solid #b7e4c7;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin: 8px 0;
+}
+
+.resource-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 480px;
+}
+
+.resource-form label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 8px;
+  color: #333;
+}
+
+.resource-form input,
+.resource-form textarea,
+.resource-form select {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.form-field {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+}
+
+.resource-form button {
+  margin-top: 16px;
+  padding: 10px;
+  background: #1f6f54;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  align-self: flex-start;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.resource-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

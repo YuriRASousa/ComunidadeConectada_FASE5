@@ -1,0 +1,35 @@
+<div class="home-page">
+  <nav class="top-nav">
+    <span class="brand">Smart HAS</span>
+    <div class="nav-links">
+      <a routerLink="/home">Início</a>
+      <a routerLink="/admin">Painel Admin</a>
+      <a *ngIf="!authService.isLoggedIn()" routerLink="/login">Entrar</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <h1>ComunidadeConectada</h1>
+    <p>
+      Uma rede de compartilhamento de recursos entre vizinhos: ferramentas, livros,
+      equipamentos médicos e muito mais — emprestados, trocados ou doados dentro da
+      sua comunidade.
+    </p>
+    <a class="cta" routerLink="/admin">Acessar painel administrativo</a>
+  </header>
+
+  <section class="features">
+    <div class="feature-card">
+      <h3>Empréstimo</h3>
+      <p>Compartilhe itens temporariamente com quem precisa.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Troca</h3>
+      <p>Troque recursos entre membros da comunidade.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Doação</h3>
+      <p>Doe o que não usa mais para quem precisa.</p>
+    </div>
+  </section>
+</div>
