@@ -15,12 +15,14 @@ target/
 # Backend — banco H2 legado (o backend atual usa Firebase)
 backend/smarthas-api/data/
 
-# Docs — dependências do script de geração de PDF/PPTX e assets intermediários
-docs/node_modules/
-docs/pptx_assets/*
-# ...menos o avatar, que e insumo do gerador (nao e derivado)
-!docs/pptx_assets/avatar_yuri.png
-docs/*.jpg
+# Docs — em docs/ o repositorio guarda so os entregaveis finais. Os geradores
+# (gerar_*.js), suas dependencias, as capturas de tela e o roteiro de
+# gravacao ficam apenas na maquina local.
+docs/*
+!docs/Relatorio_SmartHAS_Fase5_Cap1.docx
+!docs/Relatorio_SmartHAS_Fase5_Cap1.pdf
+!docs/Slides_SmartHAS_Fase5_Cap1.pptx
+!docs/Slides_SmartHAS_Fase5_Cap1.pdf
 
 # Sistema
 .DS_Store
