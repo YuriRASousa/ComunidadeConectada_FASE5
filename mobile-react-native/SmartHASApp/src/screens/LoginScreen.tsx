@@ -10,7 +10,9 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { colors } from '../theme/theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Share2, User, Mail, Lock, MapPin, EyeOff } from 'lucide-react-native';
+import { colors, gradients } from '../theme/theme';
 import { useAuth } from '../context/AuthContext';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
@@ -54,55 +56,67 @@ export default function LoginScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.icon}>🌐</Text>
+        <LinearGradient colors={gradients.brand} style={styles.iconBadge}>
+          <Share2 color={colors.white} size={38} strokeWidth={1.75} />
+        </LinearGradient>
         <Text style={styles.title}>{isRegistering ? 'Criar Conta' : 'Bem-vindo de volta'}</Text>
 
         {isRegistering && (
-          <TextInput
-            style={styles.input}
-            placeholder="Nome Completo"
-            placeholderTextColor={colors.grey400}
-            value={name}
-            onChangeText={setName}
-          />
+          <View style={styles.inputWrap}>
+            <User color={colors.primaryBlue} size={19} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Nome Completo"
+              placeholderTextColor={colors.grey400}
+              value={name}
+              onChangeText={setName}
+            />
+          </View>
         )}
-        <TextInput
-          style={styles.input}
-          placeholder="E-mail"
-          placeholderTextColor={colors.grey400}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Senha"
-          placeholderTextColor={colors.grey400}
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        {isRegistering && (
+        <View style={styles.inputWrap}>
+          <Mail color={colors.primaryBlue} size={19} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
-            placeholder="Endereço (Cidade/Estado)"
+            placeholder="E-mail"
             placeholderTextColor={colors.grey400}
-            value={address}
-            onChangeText={setAddress}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
           />
+        </View>
+        <View style={styles.inputWrap}>
+          <Lock color={colors.primaryBlue} size={19} style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Senha"
+            placeholderTextColor={colors.grey400}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+        </View>
+        {isRegistering && (
+          <View style={styles.inputWrap}>
+            <MapPin color={colors.primaryBlue} size={19} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Endereço (Cidade/Estado)"
+              placeholderTextColor={colors.grey400}
+              value={address}
+              onChangeText={setAddress}
+            />
+          </View>
         )}
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleSubmit}
-          disabled={auth.isLoading}
-        >
-          {auth.isLoading ? (
-            <ActivityIndicator color={colors.white} />
-          ) : (
-            <Text style={styles.buttonText}>{isRegistering ? 'CADASTRAR' : 'ENTRAR'}</Text>
-          )}
+        <TouchableOpacity style={styles.button} activeOpacity={0.9} onPress={handleSubmit} disabled={auth.isLoading}>
+          <LinearGradient colors={gradients.brand} style={styles.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+            {auth.isLoading ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <Text style={styles.buttonText}>{isRegistering ? 'CADASTRAR' : 'ENTRAR'}</Text>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => setIsRegistering(!isRegistering)} style={{ marginTop: 16 }}>
@@ -114,6 +128,7 @@ export default function LoginScreen({ navigation }: Props) {
         <View style={styles.divider} />
 
         <TouchableOpacity style={styles.guestButton} onPress={handleGuest}>
+          <EyeOff color={colors.primaryBlue} size={17} />
           <Text style={styles.guestButtonText}>ENTRAR COMO VISITANTE</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -124,7 +139,20 @@ export default function LoginScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.white },
   scroll: { paddingHorizontal: 30, paddingTop: 60, paddingBottom: 40, alignItems: 'stretch' },
-  icon: { fontSize: 56, textAlign: 'center', marginBottom: 16 },
+  iconBadge: {
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    shadowColor: colors.primaryBlue,
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -132,29 +160,31 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 32,
   },
-  input: {
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E5E7EB',
     backgroundColor: '#FAFAFA',
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 14,
     marginBottom: 16,
+  },
+  inputIcon: { marginRight: 10 },
+  input: {
+    flex: 1,
+    paddingVertical: 14,
     fontSize: 15,
     color: colors.textDark,
   },
-  button: {
-    height: 55,
-    backgroundColor: colors.primaryBlue,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
+  button: { height: 55, borderRadius: 12, overflow: 'hidden', marginTop: 8 },
+  buttonGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   buttonText: { color: colors.white, fontSize: 16, fontWeight: 'bold' },
   link: { color: colors.primaryBlue, textAlign: 'center' },
   divider: { height: 1, backgroundColor: '#E5E7EB', marginVertical: 32 },
   guestButton: {
+    flexDirection: 'row',
+    gap: 8,
     height: 50,
     borderRadius: 12,
     borderWidth: 1,

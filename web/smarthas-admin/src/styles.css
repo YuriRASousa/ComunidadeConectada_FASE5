@@ -1,1 +1,25 @@
-/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --color-navy: #0f172a;
+  --color-navy-soft: #1e293b;
+  --color-navy-100: #f1f5f9;
+  --color-sky: #0ea5e9;
+  --color-sky-dark: #0284c7;
+  --color-sky-light: #e0f2fe;
+  --color-brand-green: #10b981;
+  --color-brand-green-light: #d1fae5;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}

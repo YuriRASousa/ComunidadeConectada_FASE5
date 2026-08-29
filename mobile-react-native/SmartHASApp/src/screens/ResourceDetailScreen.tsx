@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { Package, MapPin } from 'lucide-react-native';
 import { colors } from '../theme/theme';
 import { useResources } from '../context/ResourceContext';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -26,7 +27,7 @@ export default function ResourceDetailScreen({ route, navigation }: Props) {
           {resource.imageUrl ? (
             <Image source={{ uri: resource.imageUrl }} style={styles.image} resizeMode="cover" />
           ) : (
-            <Text style={{ fontSize: 64 }}>📦</Text>
+            <Package color={colors.primaryBlue} size={56} strokeWidth={1.5} />
           )}
         </View>
         <View style={styles.content}>
@@ -38,7 +39,7 @@ export default function ResourceDetailScreen({ route, navigation }: Props) {
           </View>
           <Text style={styles.title}>{resource.title}</Text>
           <View style={styles.offerantRow}>
-            <Text style={{ fontSize: 18 }}>📍</Text>
+            <MapPin color={colors.primaryBlue} size={18} />
             <Text style={styles.offerant}>Ofertado por: {resource.offerantName}</Text>
           </View>
           <View style={styles.divider} />

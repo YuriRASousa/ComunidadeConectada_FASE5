@@ -9,7 +9,9 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '../theme/theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Search, WifiOff } from 'lucide-react-native';
+import { colors, gradients } from '../theme/theme';
 import { useAuth } from '../context/AuthContext';
 import { useResources } from '../context/ResourceContext';
 import ResourceCard from '../components/ResourceCard';
@@ -34,18 +36,18 @@ export default function HomeScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
+      <LinearGradient colors={gradients.dark} style={styles.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <Text style={styles.greeting}>Olá, {firstName}!</Text>
         <Text style={styles.subGreeting}>O que você precisa hoje?</Text>
         <View style={styles.searchBox}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Search color={colors.primaryBlue} size={18} style={{ marginRight: 8 }} />
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar recursos ou ajuda..."
             placeholderTextColor={colors.grey400}
           />
         </View>
-      </View>
+      </LinearGradient>
 
       <View style={styles.sectionRow}>
         <Text style={styles.sectionTitle}>Destaques na Região</Text>
@@ -56,7 +58,7 @@ export default function HomeScreen({ navigation }: Props) {
         <ActivityIndicator style={{ marginTop: 40 }} color={colors.primaryBlue} />
       ) : error && resources.length === 0 ? (
         <View style={styles.centerBox}>
-          <Text style={styles.errorIcon}>📡</Text>
+          <WifiOff color={colors.grey400} size={40} style={{ marginBottom: 12 }} />
           <Text style={styles.errorText}>Não foi possível carregar os recursos.{'\n'}{error}</Text>
           <TouchableOpacity onPress={() => fetchResources()}>
             <Text style={styles.retry}>Tentar novamente</Text>
@@ -104,7 +106,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingHorizontal: 16,
   },
-  searchIcon: { marginRight: 8 },
   searchInput: { flex: 1, color: colors.textDark },
   sectionRow: {
     flexDirection: 'row',
@@ -116,7 +117,6 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.primaryDark },
   sectionAction: { color: colors.primaryBlue, fontWeight: '600' },
   centerBox: { alignItems: 'center', paddingHorizontal: 20, paddingTop: 40 },
-  errorIcon: { fontSize: 40, marginBottom: 12 },
   errorText: { color: colors.grey600, textAlign: 'center', marginBottom: 12 },
   retry: { color: colors.primaryBlue, fontWeight: 'bold' },
   emptyText: { color: colors.grey600 },

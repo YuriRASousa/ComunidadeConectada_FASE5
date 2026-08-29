@@ -53,6 +53,11 @@ public class DataSeeder implements CommandLineRunner {
                 "Rua Oscar Freire, 200, São Paulo - SP", Role.USER, 4.8, 15, true);
         User carlos = ensureUser("carlos.souza@exemplo.com", "123456", "Carlos Souza",
                 "Alameda Santos, 800, São Paulo - SP", Role.USER, 4.6, 5, false);
+        assignAvatar(admin);
+        assignAvatar(yuri);
+        assignAvatar(joao);
+        assignAvatar(maria);
+        assignAvatar(carlos);
 
         resourceRepository.save(Resource.builder()
                 .title("Furadeira Bosch")
@@ -61,6 +66,7 @@ public class DataSeeder implements CommandLineRunner {
                 .condition(Condition.EXCELENTE)
                 .type(ResourceType.EMPRESTIMO)
                 .availability(Availability.DISPONIVEL)
+                .imageUrl("https://images.unsplash.com/photo-1504148455328-c376907d081c?q=80&w=500&auto=format&fit=crop")
                 .latitude(-23.5631)
                 .longitude(-46.6544)
                 .offerantId(joao.getId())
@@ -76,6 +82,7 @@ public class DataSeeder implements CommandLineRunner {
                 .condition(Condition.BOM)
                 .type(ResourceType.EMPRESTIMO)
                 .availability(Availability.DISPONIVEL)
+                .imageUrl("https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?q=80&w=500&auto=format&fit=crop")
                 .latitude(-23.5689)
                 .longitude(-46.6642)
                 .offerantId(maria.getId())
@@ -91,6 +98,7 @@ public class DataSeeder implements CommandLineRunner {
                 .condition(Condition.EXCELENTE)
                 .type(ResourceType.TROCA)
                 .availability(Availability.DISPONIVEL)
+                .imageUrl("https://images.unsplash.com/photo-1589998059171-988d887df646?q=80&w=500&auto=format&fit=crop")
                 .latitude(-23.5505)
                 .longitude(-46.6333)
                 .offerantId(carlos.getId())
@@ -119,5 +127,19 @@ public class DataSeeder implements CommandLineRunner {
                 .isVerified(verified)
                 .createdAt(new Date())
                 .build()));
+    }
+
+    /**
+     * Avatar gerado via DiceBear (api.dicebear.com, serviço público e gratuito,
+     * sem necessidade de conta/chave) — determinístico por nome, então cada
+     * usuário semeado sempre recebe a mesma ilustração.
+     */
+    private void assignAvatar(User user) {
+        if (user.getProfileImageUrl() != null) {
+            return;
+        }
+        String seed = user.getName().replace(" ", "");
+        user.setProfileImageUrl("https://api.dicebear.com/9.x/avataaars/png?seed=" + seed);
+        userRepository.save(user);
     }
 }

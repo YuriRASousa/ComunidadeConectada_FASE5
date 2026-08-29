@@ -1,35 +1,77 @@
-<div class="home-page">
-  <nav class="top-nav">
-    <span class="brand">Smart HAS</span>
-    <div class="nav-links">
-      <a routerLink="/home">Início</a>
-      <a routerLink="/admin">Painel Admin</a>
-      <a *ngIf="!authService.isLoggedIn()" routerLink="/login">Entrar</a>
+<div class="min-h-screen bg-white font-sans">
+  <nav class="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100/80 bg-white/80 px-6 py-4 backdrop-blur-md sm:px-10">
+    <span class="flex items-center gap-2 text-[15px] font-extrabold tracking-tight text-navy">
+      <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy">
+        <svg lucideShieldCheck [size]="16" class="text-sky"></svg>
+      </span>
+      Smart HAS
+    </span>
+    <div class="flex items-center gap-7 text-sm font-medium">
+      <a routerLink="/home" class="text-navy no-underline">Início</a>
+      <a routerLink="/admin" class="text-slate-500 no-underline transition hover:text-navy">Painel Admin</a>
+      <a
+        *ngIf="!authService.isLoggedIn()"
+        routerLink="/login"
+        class="rounded-lg bg-sky px-4 py-2 font-semibold text-white no-underline shadow-sm shadow-sky/30 transition hover:bg-sky-dark"
+      >
+        Entrar
+      </a>
     </div>
   </nav>
 
-  <header class="hero">
-    <h1>ComunidadeConectada</h1>
-    <p>
-      Uma rede de compartilhamento de recursos entre vizinhos: ferramentas, livros,
-      equipamentos médicos e muito mais — emprestados, trocados ou doados dentro da
-      sua comunidade.
+  <header class="relative overflow-hidden px-6 pb-20 pt-24 text-center sm:pt-32">
+    <div
+      class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[480px]"
+      style="background: radial-gradient(60% 60% at 50% 0%, rgba(14,165,233,0.10), transparent 70%);"
+    ></div>
+
+    <span class="inline-block rounded-full bg-sky-light px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-sky-dark">
+      ComunidadeConectada
+    </span>
+
+    <h1 class="mx-auto mt-6 max-w-2xl text-4xl font-extrabold leading-[1.15] tracking-tight text-navy sm:text-5xl">
+      Compartilhar recursos aproxima
+      <span class="bg-gradient-to-r from-sky to-brand-green bg-clip-text text-transparent">a comunidade</span>
+    </h1>
+
+    <p class="mx-auto mt-6 max-w-lg text-[17px] leading-relaxed text-slate-500">
+      Uma rede de compartilhamento entre vizinhos: ferramentas, livros,
+      equipamentos médicos e muito mais — emprestados, trocados ou doados
+      dentro da sua comunidade.
     </p>
-    <a class="cta" routerLink="/admin">Acessar painel administrativo</a>
+
+    <a
+      routerLink="/admin"
+      class="mt-9 inline-flex items-center gap-2 rounded-xl bg-navy px-7 py-3.5 text-[15px] font-bold text-white no-underline shadow-xl shadow-navy/20 transition hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-navy/25"
+    >
+      Acessar painel administrativo
+      <svg lucideArrowRight [size]="17"></svg>
+    </a>
   </header>
 
-  <section class="features">
-    <div class="feature-card">
-      <h3>Empréstimo</h3>
-      <p>Compartilhe itens temporariamente com quem precisa.</p>
+  <section class="mx-auto grid max-w-5xl gap-6 px-6 pb-28 sm:grid-cols-3">
+    <div class="rounded-2xl border border-slate-100 bg-white p-7 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_28px_-14px_rgba(15,23,42,0.12)] transition hover:-translate-y-1 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_18px_34px_-14px_rgba(15,23,42,0.18)]">
+      <div class="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-sky">
+        <svg lucideHandshake [size]="20" class="text-white"></svg>
+      </div>
+      <h3 class="mb-1.5 text-base font-bold text-navy">Empréstimo</h3>
+      <p class="text-[14.5px] leading-relaxed text-slate-500">Compartilhe itens temporariamente com quem precisa.</p>
     </div>
-    <div class="feature-card">
-      <h3>Troca</h3>
-      <p>Troque recursos entre membros da comunidade.</p>
+
+    <div class="rounded-2xl border border-slate-100 bg-white p-7 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_28px_-14px_rgba(15,23,42,0.12)] transition hover:-translate-y-1 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_18px_34px_-14px_rgba(15,23,42,0.18)]">
+      <div class="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-brand-green">
+        <svg lucideRepeat2 [size]="20" class="text-white"></svg>
+      </div>
+      <h3 class="mb-1.5 text-base font-bold text-navy">Troca</h3>
+      <p class="text-[14.5px] leading-relaxed text-slate-500">Troque recursos entre membros da comunidade.</p>
     </div>
-    <div class="feature-card">
-      <h3>Doação</h3>
-      <p>Doe o que não usa mais para quem precisa.</p>
+
+    <div class="rounded-2xl border border-slate-100 bg-white p-7 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_28px_-14px_rgba(15,23,42,0.12)] transition hover:-translate-y-1 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_18px_34px_-14px_rgba(15,23,42,0.18)]">
+      <div class="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-navy">
+        <svg lucideGift [size]="20" class="text-white"></svg>
+      </div>
+      <h3 class="mb-1.5 text-base font-bold text-navy">Doação</h3>
+      <p class="text-[14.5px] leading-relaxed text-slate-500">Doe o que não usa mais para quem precisa.</p>
     </div>
   </section>
 </div>

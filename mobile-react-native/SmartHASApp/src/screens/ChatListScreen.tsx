@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { MessageCircle, Package } from 'lucide-react-native';
 import { colors } from '../theme/theme';
 import { useChat } from '../context/ChatContext';
 import type { CompositeScreenProps } from '@react-navigation/native';
@@ -28,7 +29,7 @@ export default function ChatListScreen({ navigation }: Props) {
       </View>
       {activeConversations.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyIcon}>💬</Text>
+          <MessageCircle color={colors.grey300} size={64} strokeWidth={1.5} style={{ marginBottom: 16 }} />
           <Text style={styles.emptyTitle}>Nenhuma conversa ainda</Text>
           <Text style={styles.emptySubtitle}>Suas conversas com ofertantes aparecerão aqui.</Text>
         </View>
@@ -48,7 +49,7 @@ export default function ChatListScreen({ navigation }: Props) {
               }
             >
               <View style={styles.avatar}>
-                <Text>📦</Text>
+                <Package color={colors.primaryBlue} size={22} />
               </View>
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text style={styles.rowTitle}>{item.resourceTitle}</Text>
@@ -71,7 +72,6 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 16, paddingVertical: 12 },
   headerTitle: { fontSize: 22, fontWeight: 'bold', color: colors.primaryDark },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
-  emptyIcon: { fontSize: 64, marginBottom: 16 },
   emptyTitle: { color: colors.grey600, fontSize: 18 },
   emptySubtitle: { color: colors.grey500, marginTop: 8, textAlign: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },

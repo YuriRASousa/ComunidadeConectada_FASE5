@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { colors } from '../theme/theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Package, User, MessageCircle } from 'lucide-react-native';
+import { colors, gradients } from '../theme/theme';
 import { Resource } from '../types';
 
 interface Props {
@@ -18,12 +20,12 @@ export default function ResourceCard({ resource, onPress, onAction }: Props) {
             <Image source={{ uri: resource.imageUrl }} style={styles.image} resizeMode="cover" />
           ) : (
             <View style={styles.imagePlaceholder}>
-              <Text style={styles.imagePlaceholderIcon}>📦</Text>
+              <Package color={colors.primaryBlue} size={36} strokeWidth={1.5} />
             </View>
           )}
-          <View style={styles.badge}>
+          <LinearGradient colors={gradients.brand} style={styles.badge} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
             <Text style={styles.badgeText}>{resource.category.toUpperCase()}</Text>
-          </View>
+          </LinearGradient>
         </View>
         <View style={styles.body}>
           <View style={styles.titleRow}>
@@ -37,12 +39,13 @@ export default function ResourceCard({ resource, onPress, onAction }: Props) {
           </Text>
           <View style={styles.footerRow}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>👤</Text>
+              <User color={colors.primaryBlue} size={13} />
             </View>
             <Text style={styles.offerant} numberOfLines={1}>
               {resource.offerantName}
             </Text>
-            <TouchableOpacity style={styles.actionButton} onPress={onAction}>
+            <TouchableOpacity style={styles.actionButton} onPress={onAction} activeOpacity={0.85}>
+              <MessageCircle color={colors.white} size={13} />
               <Text style={styles.actionButtonText}>CONVERSAR</Text>
             </TouchableOpacity>
           </View>
@@ -68,12 +71,10 @@ const styles = StyleSheet.create({
   imageWrap: { height: 160, width: '100%', backgroundColor: colors.scaffoldBg },
   image: { width: '100%', height: '100%' },
   imagePlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  imagePlaceholderIcon: { fontSize: 40 },
   badge: {
     position: 'absolute',
     top: 12,
     left: 12,
-    backgroundColor: 'rgba(14,165,233,0.85)',
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -93,9 +94,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontSize: 12 },
   offerant: { flex: 1, marginLeft: 8, fontSize: 13, color: colors.textDark, fontWeight: '500' },
   actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: colors.primaryDark,
     borderRadius: 10,
     paddingHorizontal: 16,

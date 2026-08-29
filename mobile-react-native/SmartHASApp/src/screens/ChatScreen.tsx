@@ -11,6 +11,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import { Send } from 'lucide-react-native';
 import { colors } from '../theme/theme';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
@@ -115,8 +116,8 @@ export default function ChatScreen({ route, navigation }: Props) {
           value={text}
           onChangeText={setText}
         />
-        <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={isSending}>
-          {isSending ? <ActivityIndicator size="small" color={colors.white} /> : <Text style={styles.sendIcon}>➤</Text>}
+        <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={isSending} activeOpacity={0.85}>
+          {isSending ? <ActivityIndicator size="small" color={colors.white} /> : <Send color={colors.white} size={17} />}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -160,5 +161,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sendIcon: { color: colors.white, fontSize: 16 },
 });

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import { Camera, Sparkles } from 'lucide-react-native';
 import { colors } from '../theme/theme';
 import { categories, conditions, types } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -155,7 +156,7 @@ export default function OfferResourceScreen() {
             <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="cover" />
           ) : (
             <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 32 }}>📷</Text>
+              <Camera color={colors.grey400} size={30} strokeWidth={1.5} />
               <Text style={{ color: colors.grey500, marginTop: 8 }}>Adicionar Foto</Text>
             </View>
           )}
@@ -163,11 +164,14 @@ export default function OfferResourceScreen() {
 
         <View style={styles.descHeaderRow}>
           <Text style={styles.label}>Descrição Detalhada</Text>
-          <TouchableOpacity onPress={improveWithAI} disabled={isImproving}>
+          <TouchableOpacity style={styles.aiLinkRow} onPress={improveWithAI} disabled={isImproving}>
             {isImproving ? (
               <ActivityIndicator size="small" color={colors.primaryBlue} />
             ) : (
-              <Text style={styles.aiLink}>✨ Melhorar com IA</Text>
+              <>
+                <Sparkles color={colors.primaryBlue} size={14} />
+                <Text style={styles.aiLink}>Melhorar com IA</Text>
+              </>
             )}
           </TouchableOpacity>
         </View>
@@ -223,6 +227,7 @@ const styles = StyleSheet.create({
   },
   imagePreview: { width: '100%', height: '100%' },
   descHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 },
+  aiLinkRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   aiLink: { color: colors.primaryBlue, fontWeight: '600' },
   publishButton: {
     height: 55,

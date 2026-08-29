@@ -1,185 +1,314 @@
-<div class="admin-page">
-  <nav class="top-nav">
-    <span class="brand">Smart HAS — Painel Admin</span>
-    <div class="nav-links">
-      <a routerLink="/home">Início</a>
-      <span class="user-badge" *ngIf="authService.currentUser() as u">
-        {{ u.name }}
-        <span class="admin-tag" *ngIf="authService.isAdmin()">ADMIN</span>
+<div class="flex min-h-screen bg-slate-50 font-sans text-navy">
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="flex w-64 shrink-0 flex-col bg-navy text-white max-lg:hidden">
+    <div class="flex items-center gap-2.5 px-6 py-6">
+      <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-sky/15 ring-1 ring-sky/30">
+        <svg lucideShieldCheck [size]="18" class="text-sky"></svg>
       </span>
-      <button class="logout-btn" (click)="logout()">Sair</button>
+      <div class="leading-tight">
+        <div class="text-[15px] font-extrabold">Smart HAS</div>
+        <div class="text-[11px] font-medium text-slate-400">Painel Admin</div>
+      </div>
     </div>
-  </nav>
 
-  <main class="content">
-    <!-- ===================== STATS ===================== -->
-    <section class="panel">
-      <h2>Estatísticas</h2>
+    <nav class="mt-4 flex flex-1 flex-col gap-1 px-3">
+      <a class="flex items-center gap-3 rounded-lg bg-white/10 px-3.5 py-2.5 text-[13.5px] font-semibold text-white no-underline">
+        <svg lucideLayoutDashboard [size]="17"></svg>
+        Dashboard
+      </a>
+      <a class="flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-[13.5px] font-medium text-slate-300 no-underline transition hover:bg-white/5 hover:text-white">
+        <svg lucideUsers [size]="17"></svg>
+        Usuários
+      </a>
+      <a class="flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-[13.5px] font-medium text-slate-300 no-underline transition hover:bg-white/5 hover:text-white">
+        <svg lucidePackage [size]="17"></svg>
+        Recursos
+      </a>
+      <a routerLink="/home" class="flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-[13.5px] font-medium text-slate-300 no-underline transition hover:bg-white/5 hover:text-white">
+        <svg lucideArrowRight [size]="17" style="transform: scaleX(-1)"></svg>
+        Site público
+      </a>
+    </nav>
 
-      <p *ngIf="statsLoading">Carregando...</p>
-      <div class="error-banner" *ngIf="statsError">{{ statsError }}</div>
-
-      <div class="stats-grid" *ngIf="!statsLoading && stats">
-        <div class="stat-card">
-          <span class="stat-value">{{ stats.totalUsers }}</span>
-          <span class="stat-label">Usuários</span>
+    <div class="mx-3 mb-4 rounded-xl bg-white/5 p-3.5" *ngIf="authService.currentUser() as u">
+      <div class="flex items-center gap-2.5">
+        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-sky text-xs font-bold">
+          {{ u.name.charAt(0) }}
         </div>
-        <div class="stat-card">
-          <span class="stat-value">{{ stats.totalResources }}</span>
-          <span class="stat-label">Recursos</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value">{{ stats.totalMessages }}</span>
-          <span class="stat-label">Mensagens</span>
+        <div class="min-w-0 leading-tight">
+          <div class="truncate text-[13px] font-semibold text-white">{{ u.name }}</div>
+          <div class="text-[11px] font-medium text-brand-green" *ngIf="authService.isAdmin()">Administrador</div>
         </div>
       </div>
+      <button
+        class="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 py-2 text-[12.5px] font-semibold text-slate-200 transition hover:bg-white/10"
+        (click)="logout()"
+      >
+        <svg lucideLogOut [size]="14"></svg>
+        Sair
+      </button>
+    </div>
+  </aside>
 
-      <div class="category-breakdown" *ngIf="!statsLoading && stats">
-        <h3>Recursos por categoria</h3>
-        <ul *ngIf="categoryEntries(stats.resourcesByCategory).length > 0; else noCategoryData">
-          <li *ngFor="let entry of categoryEntries(stats.resourcesByCategory)">
-            <span class="category-name">{{ entry.key }}</span>
-            <span class="category-count">{{ entry.value }}</span>
-          </li>
-        </ul>
-        <ng-template #noCategoryData>
-          <p class="empty-state">Nenhuma categoria com recursos ainda.</p>
-        </ng-template>
+  <!-- ===================== MAIN ===================== -->
+  <div class="flex min-w-0 flex-1 flex-col">
+    <header class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 sm:px-9">
+      <div>
+        <h1 class="m-0 text-lg font-extrabold text-navy">Dashboard</h1>
+        <p class="m-0 text-[13px] text-slate-400">Visão geral do ComunidadeConectada</p>
       </div>
-    </section>
+      <button
+        class="flex items-center gap-2 rounded-lg border border-slate-200 px-3.5 py-2 text-[12.5px] font-semibold text-slate-500 transition hover:bg-slate-50 lg:hidden"
+        (click)="logout()"
+      >
+        <svg lucideLogOut [size]="14"></svg>
+        Sair
+      </button>
+    </header>
 
-    <!-- ===================== USERS ===================== -->
-    <section class="panel">
-      <h2>Usuários</h2>
+    <main class="flex-1 space-y-7 px-6 py-8 sm:px-9">
+      <!-- ===================== STATS ===================== -->
+      <section>
+        <p class="text-sm text-slate-400" *ngIf="statsLoading">Carregando...</p>
+        <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600" *ngIf="statsError">{{ statsError }}</div>
 
-      <p *ngIf="usersLoading">Carregando...</p>
-      <div class="error-banner" *ngIf="usersError">{{ usersError }}</div>
-
-      <table class="data-table" *ngIf="!usersLoading && users.length > 0">
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>E-mail</th>
-            <th>Reputação</th>
-            <th>Verificado</th>
-            <th>Papel</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let user of users">
-            <td>{{ user.name }}</td>
-            <td>{{ user.email }}</td>
-            <td>{{ user.reputation | number: '1.1-1' }}</td>
-            <td>
-              <span *ngIf="user.isVerified" class="badge badge-ok">Sim</span>
-              <span *ngIf="!user.isVerified" class="badge badge-muted">Não</span>
-            </td>
-            <td>
-              <span class="badge" [class.badge-admin]="user.role === 'ADMIN'">{{ user.role }}</span>
-            </td>
-            <td>
-              <button class="danger-btn" (click)="deleteUser(user)">Excluir</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <p class="empty-state" *ngIf="!usersLoading && users.length === 0 && !usersError">
-        Nenhum usuário encontrado.
-      </p>
-    </section>
-
-    <!-- ===================== RESOURCES ===================== -->
-    <section class="panel">
-      <h2>Recursos</h2>
-
-      <p *ngIf="resourcesLoading">Carregando...</p>
-      <div class="error-banner" *ngIf="resourcesError">{{ resourcesError }}</div>
-
-      <table class="data-table" *ngIf="!resourcesLoading && resources.length > 0">
-        <thead>
-          <tr>
-            <th>Título</th>
-            <th>Categoria</th>
-            <th>Tipo</th>
-            <th>Disponibilidade</th>
-            <th>Ofertante</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let resource of resources">
-            <td>{{ resource.title }}</td>
-            <td>{{ resource.category }}</td>
-            <td>{{ resource.type }}</td>
-            <td>{{ resource.availability }}</td>
-            <td>{{ resource.offerantName }}</td>
-            <td>
-              <button class="danger-btn" (click)="deleteResource(resource)">Excluir</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <p class="empty-state" *ngIf="!resourcesLoading && resources.length === 0 && !resourcesError">
-        Nenhum recurso encontrado.
-      </p>
-    </section>
-
-    <!-- ===================== CREATE RESOURCE ===================== -->
-    <section class="panel">
-      <h2>Novo recurso</h2>
-
-      <form class="resource-form" (ngSubmit)="createResource()" #resourceForm="ngForm">
-        <label for="title">Título</label>
-        <input
-          id="title"
-          name="title"
-          type="text"
-          [(ngModel)]="newResource.title"
-          required
-        />
-
-        <label for="description">Descrição</label>
-        <textarea
-          id="description"
-          name="description"
-          rows="3"
-          [(ngModel)]="newResource.description"
-          required
-        ></textarea>
-
-        <div class="form-row">
-          <div class="form-field">
-            <label for="category">Categoria</label>
-            <select id="category" name="category" [(ngModel)]="newResource.category">
-              <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
-            </select>
+        <div class="grid gap-4 sm:grid-cols-3" *ngIf="!statsLoading && stats">
+          <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_24px_-14px_rgba(15,23,42,0.1)]">
+            <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-sky-light">
+              <svg lucideUsers [size]="18" class="text-sky-dark"></svg>
+            </div>
+            <span class="block text-[1.9rem] font-extrabold leading-none text-navy">{{ stats.totalUsers }}</span>
+            <span class="text-[13px] font-medium text-slate-400">Usuários</span>
           </div>
-
-          <div class="form-field">
-            <label for="condition">Condição</label>
-            <select id="condition" name="condition" [(ngModel)]="newResource.condition">
-              <option *ngFor="let c of conditions" [value]="c">{{ c }}</option>
-            </select>
+          <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_24px_-14px_rgba(15,23,42,0.1)]">
+            <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-brand-green-light">
+              <svg lucidePackage [size]="18" class="text-brand-green"></svg>
+            </div>
+            <span class="block text-[1.9rem] font-extrabold leading-none text-navy">{{ stats.totalResources }}</span>
+            <span class="text-[13px] font-medium text-slate-400">Recursos</span>
           </div>
-
-          <div class="form-field">
-            <label for="type">Tipo</label>
-            <select id="type" name="type" [(ngModel)]="newResource.type">
-              <option *ngFor="let t of types" [value]="t">{{ t }}</option>
-            </select>
+          <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_24px_-14px_rgba(15,23,42,0.1)]">
+            <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-navy-100">
+              <svg lucideLayoutDashboard [size]="18" class="text-navy"></svg>
+            </div>
+            <span class="block text-[1.9rem] font-extrabold leading-none text-navy">{{ stats.totalMessages }}</span>
+            <span class="text-[13px] font-medium text-slate-400">Mensagens</span>
           </div>
         </div>
 
-        <div class="error-banner" *ngIf="createError">{{ createError }}</div>
-        <div class="success-banner" *ngIf="createSuccess">{{ createSuccess }}</div>
+        <div class="mt-4 rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_24px_-14px_rgba(15,23,42,0.1)]" *ngIf="!statsLoading && stats">
+          <h3 class="mb-3 text-[12px] font-bold uppercase tracking-wide text-slate-400">Recursos por categoria</h3>
+          <ul class="m-0 list-none p-0" *ngIf="categoryEntries(stats.resourcesByCategory).length > 0; else noCategoryData">
+            <li
+              *ngFor="let entry of categoryEntries(stats.resourcesByCategory)"
+              class="flex items-center justify-between border-b border-slate-100 py-2.5 text-[14px] last:border-b-0"
+            >
+              <span class="text-slate-600">{{ entry.key }}</span>
+              <span class="font-bold text-navy">{{ entry.value }}</span>
+            </li>
+          </ul>
+          <ng-template #noCategoryData>
+            <p class="m-0 text-sm italic text-slate-400">Nenhuma categoria com recursos ainda.</p>
+          </ng-template>
+        </div>
+      </section>
 
-        <button type="submit" [disabled]="createLoading || resourceForm.invalid">
-          {{ createLoading ? 'Criando...' : 'Criar recurso' }}
-        </button>
-      </form>
-    </section>
-  </main>
+      <!-- ===================== USERS ===================== -->
+      <section class="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_24px_-14px_rgba(15,23,42,0.1)]">
+        <h2 class="mb-4 flex items-center gap-2 text-[15px] font-bold text-navy">
+          <svg lucideUsers [size]="17" class="text-slate-400"></svg>
+          Usuários
+        </h2>
+
+        <p class="text-sm text-slate-400" *ngIf="usersLoading">Carregando...</p>
+        <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600" *ngIf="usersError">{{ usersError }}</div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-100" *ngIf="!usersLoading && users.length > 0">
+          <table class="w-full border-collapse text-left text-[13.5px]">
+            <thead>
+              <tr class="border-b border-slate-100 bg-slate-50">
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Nome</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">E-mail</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Reputação</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Verificado</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Papel</th>
+                <th class="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of users" class="border-b border-slate-50 transition last:border-b-0 hover:bg-slate-50/70">
+                <td class="flex items-center gap-2.5 px-4 py-3 font-semibold text-navy">
+                  <span class="flex h-7 w-7 items-center justify-center rounded-full bg-navy-100 text-[11px] font-bold text-navy">
+                    {{ user.name.charAt(0) }}
+                  </span>
+                  {{ user.name }}
+                </td>
+                <td class="px-4 py-3 text-slate-500">{{ user.email }}</td>
+                <td class="px-4 py-3 text-slate-600">{{ user.reputation | number: '1.1-1' }}</td>
+                <td class="px-4 py-3">
+                  <span *ngIf="user.isVerified" class="inline-flex items-center gap-1 rounded-full bg-brand-green-light px-2.5 py-1 text-[11.5px] font-semibold text-emerald-700">
+                    <svg lucideCheckCircle2 [size]="12"></svg> Sim
+                  </span>
+                  <span *ngIf="!user.isVerified" class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11.5px] font-semibold text-slate-400">
+                    <svg lucideXCircle [size]="12"></svg> Não
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <span
+                    class="rounded-full bg-slate-100 px-2.5 py-1 text-[11.5px] font-semibold text-slate-500"
+                    [class.bg-amber-100]="user.role === 'ADMIN'"
+                    [class.text-amber-700]="user.role === 'ADMIN'"
+                  >{{ user.role }}</span>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <button
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[12px] font-semibold text-red-600 transition hover:bg-red-100"
+                    (click)="deleteUser(user)"
+                  >
+                    <svg lucideTrash2 [size]="13"></svg>
+                    Excluir
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="text-sm italic text-slate-400" *ngIf="!usersLoading && users.length === 0 && !usersError">
+          Nenhum usuário encontrado.
+        </p>
+      </section>
+
+      <!-- ===================== RESOURCES ===================== -->
+      <section class="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_24px_-14px_rgba(15,23,42,0.1)]">
+        <h2 class="mb-4 flex items-center gap-2 text-[15px] font-bold text-navy">
+          <svg lucidePackage [size]="17" class="text-slate-400"></svg>
+          Recursos
+        </h2>
+
+        <p class="text-sm text-slate-400" *ngIf="resourcesLoading">Carregando...</p>
+        <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600" *ngIf="resourcesError">{{ resourcesError }}</div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-100" *ngIf="!resourcesLoading && resources.length > 0">
+          <table class="w-full border-collapse text-left text-[13.5px]">
+            <thead>
+              <tr class="border-b border-slate-100 bg-slate-50">
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Título</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Categoria</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Tipo</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Disponibilidade</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Ofertante</th>
+                <th class="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let resource of resources" class="border-b border-slate-50 transition last:border-b-0 hover:bg-slate-50/70">
+                <td class="px-4 py-3 font-semibold text-navy">{{ resource.title }}</td>
+                <td class="px-4 py-3">
+                  <span class="rounded-full bg-sky-light px-2.5 py-1 text-[11.5px] font-semibold text-sky-dark">{{ resource.category }}</span>
+                </td>
+                <td class="px-4 py-3 text-slate-600">{{ resource.type }}</td>
+                <td class="px-4 py-3 text-slate-600">{{ resource.availability }}</td>
+                <td class="px-4 py-3 text-slate-500">{{ resource.offerantName }}</td>
+                <td class="px-4 py-3 text-right">
+                  <button
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[12px] font-semibold text-red-600 transition hover:bg-red-100"
+                    (click)="deleteResource(resource)"
+                  >
+                    <svg lucideTrash2 [size]="13"></svg>
+                    Excluir
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="text-sm italic text-slate-400" *ngIf="!resourcesLoading && resources.length === 0 && !resourcesError">
+          Nenhum recurso encontrado.
+        </p>
+      </section>
+
+      <!-- ===================== CREATE RESOURCE ===================== -->
+      <section class="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_24px_-14px_rgba(15,23,42,0.1)]">
+        <h2 class="mb-4 flex items-center gap-2 text-[15px] font-bold text-navy">
+          <svg lucidePlus [size]="17" class="text-slate-400"></svg>
+          Novo recurso
+        </h2>
+
+        <form class="max-w-xl" (ngSubmit)="createResource()" #resourceForm="ngForm">
+          <label for="title" class="mb-1.5 mt-3 block text-[13px] font-semibold text-navy">Título</label>
+          <input
+            id="title"
+            name="title"
+            type="text"
+            [(ngModel)]="newResource.title"
+            required
+            class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-[14px] text-navy outline-none transition focus:border-sky focus:bg-white focus:ring-4 focus:ring-sky/15"
+          />
+
+          <label for="description" class="mb-1.5 mt-4 block text-[13px] font-semibold text-navy">Descrição</label>
+          <textarea
+            id="description"
+            name="description"
+            rows="3"
+            [(ngModel)]="newResource.description"
+            required
+            class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-[14px] text-navy outline-none transition focus:border-sky focus:bg-white focus:ring-4 focus:ring-sky/15"
+          ></textarea>
+
+          <div class="mt-4 flex flex-wrap gap-3">
+            <div class="min-w-[150px] flex-1">
+              <label for="category" class="mb-1.5 block text-[13px] font-semibold text-navy">Categoria</label>
+              <select
+                id="category"
+                name="category"
+                [(ngModel)]="newResource.category"
+                class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-[14px] text-navy outline-none transition focus:border-sky focus:bg-white focus:ring-4 focus:ring-sky/15"
+              >
+                <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+
+            <div class="min-w-[150px] flex-1">
+              <label for="condition" class="mb-1.5 block text-[13px] font-semibold text-navy">Condição</label>
+              <select
+                id="condition"
+                name="condition"
+                [(ngModel)]="newResource.condition"
+                class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-[14px] text-navy outline-none transition focus:border-sky focus:bg-white focus:ring-4 focus:ring-sky/15"
+              >
+                <option *ngFor="let c of conditions" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+
+            <div class="min-w-[150px] flex-1">
+              <label for="type" class="mb-1.5 block text-[13px] font-semibold text-navy">Tipo</label>
+              <select
+                id="type"
+                name="type"
+                [(ngModel)]="newResource.type"
+                class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-[14px] text-navy outline-none transition focus:border-sky focus:bg-white focus:ring-4 focus:ring-sky/15"
+              >
+                <option *ngFor="let t of types" [value]="t">{{ t }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600" *ngIf="createError">{{ createError }}</div>
+          <div class="mt-4 rounded-xl border border-emerald-200 bg-brand-green-light px-4 py-3 text-sm text-emerald-700" *ngIf="createSuccess">{{ createSuccess }}</div>
+
+          <button
+            type="submit"
+            [disabled]="createLoading || resourceForm.invalid"
+            class="mt-5 inline-flex items-center gap-2 rounded-xl bg-sky px-6 py-3 text-[14px] font-bold text-white shadow-lg shadow-sky/25 transition hover:bg-sky-dark disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <svg *ngIf="createLoading" lucideLoaderCircle [size]="16" class="animate-spin"></svg>
+            <svg *ngIf="!createLoading" lucidePlus [size]="16"></svg>
+            {{ createLoading ? 'Criando...' : 'Criar recurso' }}
+          </button>
+        </form>
+      </section>
+    </main>
+  </div>
 </div>

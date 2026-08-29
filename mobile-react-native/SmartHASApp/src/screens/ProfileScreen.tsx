@@ -1,6 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert, Image, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
+import {
+  User,
+  Camera,
+  Star,
+  Repeat2,
+  Package,
+  Bell,
+  MapPin,
+  Lock,
+  HelpCircle,
+  LogOut,
+  ChevronRight,
+} from 'lucide-react-native';
 import { colors } from '../theme/theme';
 import { useAuth } from '../context/AuthContext';
 import { useResources } from '../context/ResourceContext';
@@ -15,18 +29,17 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamList>
 >;
 
-function OptionTile({ icon, title, subtitle }: { icon: string; title: string; subtitle: string }) {
+function OptionTile({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
   return (
     <View style={styles.optionTile}>
-      <View style={styles.optionIcon}>
-        <Text>{icon}</Text>
-      </View>
+      <View style={styles.optionIcon}>{icon}</View>
       <View style={{ flex: 1, marginLeft: 12 }}>
         <Text style={styles.optionTitle}>{title}</Text>
         <Text style={styles.optionSubtitle} numberOfLines={1}>
           {subtitle}
         </Text>
       </View>
+      <ChevronRight color={colors.grey400} size={18} />
     </View>
   );
 }
@@ -65,6 +78,33 @@ export default function ProfileScreen({ navigation }: Props) {
     }
   };
 
+  const changePhoto = async () => {
+    if (auth.isGhost) {
+      Alert.alert('Smart HAS', 'Crie uma conta para alterar a foto de perfil.');
+      return;
+    }
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Smart HAS', 'Permissão de acesso às fotos negada.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.7,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      try {
+        // Sem endpoint de upload no backend — mesma limitação conhecida do
+        // app Flutter original: guardamos a URI local como profileImageUrl.
+        await auth.updateUser({ profileImageUrl: result.assets[0].uri });
+      } catch (e: any) {
+        Alert.alert('Smart HAS', `Não foi possível atualizar a foto: ${e.message ?? e}`);
+      }
+    }
+  };
+
   const doLogout = () => {
     auth.logout();
     navigation.getParent()?.reset({ index: 0, routes: [{ name: 'Onboarding' }] } as any);
@@ -76,14 +116,27 @@ export default function ProfileScreen({ navigation }: Props) {
         <View style={styles.header}>
           <View style={styles.avatarWrap}>
             <View style={styles.avatar}>
-              <Text style={{ fontSize: 40 }}>👤</Text>
+              {user.profileImageUrl ? (
+                <Image source={{ uri: user.profileImageUrl }} style={styles.avatarImage} />
+              ) : (
+                <User color={colors.primaryBlue} size={44} strokeWidth={1.5} />
+              )}
             </View>
+            <TouchableOpacity style={styles.cameraBadge} onPress={changePhoto} activeOpacity={0.85}>
+              <Camera color={colors.white} size={16} />
+            </TouchableOpacity>
           </View>
           <Text style={styles.name}>{user.name}</Text>
           <Text style={styles.email}>{user.email}</Text>
           <View style={styles.statsRow}>
-            <Text style={styles.stat}>⭐ {user.reputation.toString()} Reputação</Text>
-            <Text style={styles.stat}>🔄 {user.totalTransactions} Trocas</Text>
+            <View style={styles.stat}>
+              <Star color="#F59E0B" size={16} fill="#F59E0B" />
+              <Text style={styles.statText}>{user.reputation.toString()} Reputação</Text>
+            </View>
+            <View style={styles.stat}>
+              <Repeat2 color={colors.secondaryGreen} size={16} />
+              <Text style={styles.statText}>{user.totalTransactions} Trocas</Text>
+            </View>
           </View>
           <TouchableOpacity style={styles.editButton} onPress={openEdit}>
             <Text style={styles.editButtonText}>EDITAR PERFIL</Text>
@@ -94,7 +147,7 @@ export default function ProfileScreen({ navigation }: Props) {
           <Text style={styles.sectionTitle}>Meus Itens Ofertados</Text>
           {myItems.length === 0 ? (
             <View style={styles.emptyItems}>
-              <Text style={{ fontSize: 32 }}>📦</Text>
+              <Package color={colors.grey300} size={36} strokeWidth={1.5} />
               <Text style={{ color: colors.grey500, marginTop: 8 }}>Você ainda não ofertou nada.</Text>
             </View>
           ) : (
@@ -107,12 +160,29 @@ export default function ProfileScreen({ navigation }: Props) {
           )}
 
           <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Configurações</Text>
-          <OptionTile icon="🔔" title="Notificações" subtitle="Sons e alertas de mensagens" />
-          <OptionTile icon="📍" title="Meu Endereço" subtitle={user.address} />
-          <OptionTile icon="🔒" title="Privacidade" subtitle="Gerenciar visibilidade e dados" />
-          <OptionTile icon="❓" title="Ajuda e Suporte" subtitle="FAQ e contato" />
+          <OptionTile
+            icon={<Bell color={colors.primaryBlue} size={18} />}
+            title="Notificações"
+            subtitle="Sons e alertas de mensagens"
+          />
+          <OptionTile
+            icon={<MapPin color={colors.primaryBlue} size={18} />}
+            title="Meu Endereço"
+            subtitle={user.address}
+          />
+          <OptionTile
+            icon={<Lock color={colors.primaryBlue} size={18} />}
+            title="Privacidade"
+            subtitle="Gerenciar visibilidade e dados"
+          />
+          <OptionTile
+            icon={<HelpCircle color={colors.primaryBlue} size={18} />}
+            title="Ajuda e Suporte"
+            subtitle="FAQ e contato"
+          />
 
           <TouchableOpacity style={styles.logoutButton} onPress={doLogout}>
+            <LogOut color={colors.danger} size={17} />
             <Text style={styles.logoutText}>Sair da Conta</Text>
           </TouchableOpacity>
         </View>
@@ -125,9 +195,10 @@ export default function ProfileScreen({ navigation }: Props) {
             <TextInput style={styles.modalInput} value={name} onChangeText={setName} placeholder="Nome Completo" />
             <TextInput style={styles.modalInput} value={address} onChangeText={setAddress} placeholder="Endereço" />
             <View style={styles.modalActions}>
-              <TouchableOpacity onPress={() => setEditVisible(false)}>
-                <Text style={styles.modalCancel}>Cancelar</Text>
-              </TouchableOpacity>
+              {/* Componente nativo Button do React Native (Opção A do enunciado
+                  pede View/Text/Image/Button) — as demais ações usam
+                  TouchableOpacity só por precisarem de estilo customizado. */}
+              <Button title="Cancelar" color={colors.grey600} onPress={() => setEditVisible(false)} />
               <TouchableOpacity style={styles.modalSave} onPress={saveEdit}>
                 <Text style={styles.modalSaveText}>Salvar</Text>
               </TouchableOpacity>
@@ -151,11 +222,27 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(14,165,233,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: { width: '100%', height: '100%' },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.primaryBlue,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: colors.white,
   },
   name: { fontSize: 24, fontWeight: 'bold', color: colors.primaryDark },
   email: { color: colors.grey600, fontSize: 16, marginTop: 4 },
   statsRow: { flexDirection: 'row', gap: 24, marginTop: 16 },
-  stat: { fontWeight: 'bold', color: colors.textDark },
+  stat: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  statText: { fontWeight: 'bold', color: colors.textDark, fontSize: 13 },
   editButton: {
     marginTop: 20,
     borderWidth: 1,
@@ -174,14 +261,13 @@ const styles = StyleSheet.create({
   optionIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: colors.scaffoldBg, alignItems: 'center', justifyContent: 'center' },
   optionTitle: { fontWeight: 'bold', fontSize: 15, color: colors.textDark },
   optionSubtitle: { fontSize: 12, color: colors.grey600 },
-  logoutButton: { marginTop: 16, alignItems: 'center', paddingVertical: 12 },
+  logoutButton: { flexDirection: 'row', gap: 8, marginTop: 16, alignItems: 'center', justifyContent: 'center', paddingVertical: 12 },
   logoutText: { color: colors.danger, fontWeight: 'bold', fontSize: 15 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
   modalBox: { backgroundColor: colors.white, borderRadius: 20, padding: 20, width: '85%' },
   modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: colors.textDark },
   modalInput: { borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 8, padding: 10, marginBottom: 12, color: colors.textDark },
   modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 16, marginTop: 8 },
-  modalCancel: { color: colors.grey600, fontWeight: '600', paddingVertical: 10 },
   modalSave: { backgroundColor: colors.primaryBlue, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 10 },
   modalSaveText: { color: colors.white, fontWeight: 'bold' },
 });

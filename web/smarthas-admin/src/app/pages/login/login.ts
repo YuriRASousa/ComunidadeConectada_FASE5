@@ -3,13 +3,29 @@ import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import {
+  LucideShieldCheck,
+  LucideMail,
+  LucideLock,
+  LucideArrowLeft,
+  LucideLoaderCircle,
+} from '@lucide/angular';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiError } from '../../core/models/models';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, RouterLink, NgIf],
+  imports: [
+    FormsModule,
+    RouterLink,
+    NgIf,
+    LucideShieldCheck,
+    LucideMail,
+    LucideLock,
+    LucideArrowLeft,
+    LucideLoaderCircle,
+  ],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })

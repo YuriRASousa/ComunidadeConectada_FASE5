@@ -1,14 +1,18 @@
-// Réplica direta de lib/services/gemini_service.dart: chamada de cliente
-// direta a um provedor compatível com a API do Gemini/OpenRouter, sem
-// passar pelo backend Spring Boot. Independente do resto do app.
+// Cliente direto para a API do Google Gemini (Generative Language API),
+// independente do backend Spring Boot — mesmo padrão do app Flutter
+// original (chamada direta do cliente móvel a um provedor de IA).
 //
-// Defina sua própria chave da OpenRouter em uma variável de ambiente do
-// Expo (EXPO_PUBLIC_OPENROUTER_API_KEY, em um arquivo .env local, nunca
-// commitado). Sem chave configurada, a função retorna uma mensagem
-// amigável de erro em vez de travar a tela.
-const API_KEY = process.env.EXPO_PUBLIC_OPENROUTER_API_KEY ?? '';
-const BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = 'baidu/cobuddy:free';
+// Defina sua chave em uma variável de ambiente do Expo
+// (EXPO_PUBLIC_GEMINI_API_KEY, em um arquivo .env local, nunca
+// commitado). Gere uma chave gratuita em https://aistudio.google.com/apikey.
+// Sem chave configurada, a função retorna uma mensagem amigável de erro
+// em vez de travar a tela.
+const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? '';
+const MODEL = 'gemini-3.6-flash';
+const BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+
+const TECHNICAL_INSTRUCTION =
+  'Você é um assistente técnico. Sua tarefa é realizar a tarefa solicitada e retornar APENAS o resultado final. Proibido usar saudações, introduções ou qualquer texto explicativo.';
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -18,51 +22,44 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 export async function generateResponse(prompt: string, isTechnical = false): Promise<string> {
+  if (!API_KEY) {
+    return 'IA não configurada: defina EXPO_PUBLIC_GEMINI_API_KEY (veja README).';
+  }
   try {
-    const messages: any[] = [];
+    const body: Record<string, unknown> = {
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    };
     if (isTechnical) {
-      messages.push({
-        role: 'system',
-        content:
-          'Você é um assistente técnico. Sua tarefa é realizar a tarefa solicitada e retornar APENAS o resultado final. Proibido usar saudações, introduções ou qualquer texto explicativo.',
-      });
+      body.systemInstruction = { role: 'system', parts: [{ text: TECHNICAL_INSTRUCTION }] };
     }
-    messages.push({ role: 'user', content: prompt });
 
     const response = await withTimeout(
-      fetch(BASE_URL, {
+      fetch(`${BASE_URL}?key=${API_KEY}`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://comunidadeconectada.com',
-          'X-Title': 'Comunidade Conectada',
-        },
-        body: JSON.stringify({ model: MODEL, messages, route: 'fallback' }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       }),
       45000
     );
 
     if (response.status === 200) {
       const data = await response.json();
-      if (data.choices && data.choices.length > 0) {
-        return String(data.choices[0].message.content).trim();
-      }
-      return 'IA sem resposta no momento.';
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      return text ? String(text).trim() : 'IA sem resposta no momento.';
     } else if (response.status === 429) {
       return 'Muitas requisições! O modelo gratuito está congestionado. Tente novamente em alguns segundos.';
     } else if (response.status >= 500) {
       return `O serviço de IA está instável ou em manutenção (Erro ${response.status}). Tente novamente.`;
     } else {
-      const body = await response.text();
-      console.log(`Erro OpenRouter (${response.status}): ${body}`);
+      const errBody = await response.text();
+      console.log(`Erro Gemini (${response.status}): ${errBody}`);
       return `Desculpe, a IA encontrou um problema técnico (${response.status}).`;
     }
   } catch (e) {
     if (e instanceof Error && e.message === 'timeout') {
-      return 'A resposta demorou muito para chegar. O modelo gratuito pode estar lento agora.';
+      return 'A resposta demorou muito para chegar. Tente novamente.';
     }
-    console.log('Erro de Conexão OpenRouter:', e);
+    console.log('Erro de Conexão Gemini:', e);
     return 'Sem conexão com o serviço de IA. Verifique sua internet.';
   }
 }

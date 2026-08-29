@@ -17,7 +17,9 @@ backend/smarthas-api/data/
 
 # Docs — dependências do script de geração de PDF/PPTX e assets intermediários
 docs/node_modules/
-docs/pptx_assets/
+docs/pptx_assets/*
+# ...menos o avatar, que e insumo do gerador (nao e derivado)
+!docs/pptx_assets/avatar_yuri.png
 docs/*.jpg
 
 # Sistema

@@ -1,34 +1,108 @@
-<div class="auth-page">
-  <form class="auth-card" (ngSubmit)="onSubmit()" #loginForm="ngForm">
-    <h1>Smart HAS — Admin</h1>
-    <p class="subtitle">Entre com sua conta de administrador</p>
+<div class="min-h-screen grid lg:grid-cols-[1.1fr_1fr] font-sans bg-navy-100">
+  <!-- Brand side -->
+  <div
+    class="hidden lg:flex relative items-center overflow-hidden bg-navy px-16"
+  >
+    <div
+      class="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-sky/30 blur-3xl"
+    ></div>
+    <div
+      class="pointer-events-none absolute bottom-0 right-0 h-72 w-72 rounded-full bg-brand-green/20 blur-3xl"
+    ></div>
+    <div
+      class="pointer-events-none absolute inset-0 opacity-[0.04]"
+      style="background-image: radial-gradient(circle, #fff 1px, transparent 1px); background-size: 22px 22px;"
+    ></div>
 
-    <label for="email">E-mail</label>
-    <input
-      id="email"
-      name="email"
-      type="email"
-      [(ngModel)]="email"
-      required
-      placeholder="admin@smarthas.com"
-    />
+    <div class="relative max-w-md">
+      <div class="mb-10 flex items-center gap-2.5">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-sky/15 ring-1 ring-sky/30">
+          <svg lucideShieldCheck [size]="20" class="text-sky"></svg>
+        </div>
+        <span class="text-lg font-extrabold tracking-tight text-white">Smart HAS</span>
+      </div>
 
-    <label for="password">Senha</label>
-    <input
-      id="password"
-      name="password"
-      type="password"
-      [(ngModel)]="password"
-      required
-      placeholder="••••••••"
-    />
+      <h2 class="text-4xl font-extrabold leading-[1.15] text-white">
+        Painel administrativo do <span class="text-sky">ComunidadeConectada</span>
+      </h2>
+      <p class="mt-5 text-[15px] leading-relaxed text-slate-400">
+        Gerencie usuários, recursos e acompanhe as estatísticas da comunidade em
+        tempo real, direto do backend Spring Boot integrado ao Firebase.
+      </p>
 
-    <div class="error-banner" *ngIf="errorMessage">{{ errorMessage }}</div>
+      <div class="mt-10 flex items-center gap-6 text-xs font-medium text-slate-500">
+        <span class="flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-brand-green"></span>Spring Boot</span>
+        <span class="flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-sky"></span>Firebase</span>
+        <span class="flex items-center gap-1.5"><span class="h-1.5 w-1.5 rounded-full bg-amber-400"></span>Angular</span>
+      </div>
+    </div>
+  </div>
 
-    <button type="submit" [disabled]="loading || loginForm.invalid">
-      {{ loading ? 'Entrando...' : 'Entrar' }}
-    </button>
+  <!-- Form side -->
+  <div class="flex items-center justify-center bg-white px-6 py-12">
+    <form
+      class="w-full max-w-[380px]"
+      (ngSubmit)="onSubmit()"
+      #loginForm="ngForm"
+    >
+      <h1 class="text-2xl font-extrabold text-navy">Bem-vindo de volta</h1>
+      <p class="mt-1 text-sm text-slate-500">Entre com sua conta de administrador</p>
 
-    <a class="back-link" routerLink="/home">&larr; Voltar para a página inicial</a>
-  </form>
+      <div class="mt-8">
+        <label for="email" class="mb-1.5 block text-sm font-semibold text-navy">E-mail</label>
+        <div class="relative">
+          <svg lucideMail [size]="17" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></svg>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            [(ngModel)]="email"
+            required
+            placeholder="admin@smarthas.com"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3.5 text-[15px] text-navy outline-none transition placeholder:text-slate-400 focus:border-sky focus:bg-white focus:ring-4 focus:ring-sky/15"
+          />
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label for="password" class="mb-1.5 block text-sm font-semibold text-navy">Senha</label>
+        <div class="relative">
+          <svg lucideLock [size]="17" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></svg>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            [(ngModel)]="password"
+            required
+            placeholder="••••••••"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3.5 text-[15px] text-navy outline-none transition placeholder:text-slate-400 focus:border-sky focus:bg-white focus:ring-4 focus:ring-sky/15"
+          />
+        </div>
+      </div>
+
+      <div
+        *ngIf="errorMessage"
+        class="mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-600"
+      >
+        {{ errorMessage }}
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="loading || loginForm.invalid"
+        class="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-sky py-3 text-[15px] font-bold text-white shadow-lg shadow-sky/25 transition hover:bg-sky-dark disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <svg *ngIf="loading" lucideLoaderCircle [size]="18" class="animate-spin"></svg>
+        {{ loading ? 'Entrando...' : 'Entrar' }}
+      </button>
+
+      <a
+        routerLink="/home"
+        class="mt-6 flex items-center justify-center gap-1.5 text-sm font-medium text-slate-500 no-underline transition hover:text-sky-dark"
+      >
+        <svg lucideArrowLeft [size]="15"></svg>
+        Voltar para a página inicial
+      </a>
+    </form>
+  </div>
 </div>

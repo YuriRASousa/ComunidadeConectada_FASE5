@@ -3,6 +3,19 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import {
+  LucideShieldCheck,
+  LucideLayoutDashboard,
+  LucideUsers,
+  LucidePackage,
+  LucidePlus,
+  LucideLogOut,
+  LucideTrash2,
+  LucideCheckCircle2,
+  LucideXCircle,
+  LucideLoaderCircle,
+  LucideArrowRight,
+} from '@lucide/angular';
 
 import { AuthService } from '../../core/services/auth.service';
 import { AdminService } from '../../core/services/admin.service';
@@ -22,7 +35,22 @@ import {
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    LucideShieldCheck,
+    LucideLayoutDashboard,
+    LucideUsers,
+    LucidePackage,
+    LucidePlus,
+    LucideLogOut,
+    LucideTrash2,
+    LucideCheckCircle2,
+    LucideXCircle,
+    LucideLoaderCircle,
+    LucideArrowRight,
+  ],
   templateUrl: './admin.html',
   styleUrl: './admin.css',
 })
