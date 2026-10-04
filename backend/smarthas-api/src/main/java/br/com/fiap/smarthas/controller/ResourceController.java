@@ -42,6 +42,14 @@ public class ResourceController {
         return ResponseEntity.ok(resourceService.getMine(AuthUtils.currentUserId(authentication)));
     }
 
+    @GetMapping("/proximos")
+    public ResponseEntity<List<ResourceResponse>> nearby(
+            @RequestParam double lat,
+            @RequestParam double lon,
+            @RequestParam(defaultValue = "20") int limit) {
+        return ResponseEntity.ok(resourceService.getNearby(lat, lon, limit));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ResourceResponse> getById(@PathVariable String id) {
         return ResponseEntity.ok(resourceService.getById(id));

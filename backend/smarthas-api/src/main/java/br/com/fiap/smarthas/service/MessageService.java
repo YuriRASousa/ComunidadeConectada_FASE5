@@ -8,7 +8,7 @@ import br.com.fiap.smarthas.entity.Message;
 import br.com.fiap.smarthas.entity.User;
 import br.com.fiap.smarthas.exception.ForbiddenException;
 import br.com.fiap.smarthas.exception.ResourceNotFoundException;
-import br.com.fiap.smarthas.repository.FirestoreMessageRepository;
+import br.com.fiap.smarthas.repository.JdbcMessageRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -20,11 +20,11 @@ import java.util.Map;
 @Service
 public class MessageService {
 
-    private final FirestoreMessageRepository messageRepository;
+    private final JdbcMessageRepository messageRepository;
     private final UserService userService;
     private final ResourceService resourceService;
 
-    public MessageService(FirestoreMessageRepository messageRepository, UserService userService, ResourceService resourceService) {
+    public MessageService(JdbcMessageRepository messageRepository, UserService userService, ResourceService resourceService) {
         this.messageRepository = messageRepository;
         this.userService = userService;
         this.resourceService = resourceService;

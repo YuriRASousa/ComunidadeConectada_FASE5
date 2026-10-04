@@ -10,8 +10,8 @@ import br.com.fiap.smarthas.entity.enums.ResourceType;
 import br.com.fiap.smarthas.entity.enums.Role;
 import br.com.fiap.smarthas.exception.ForbiddenException;
 import br.com.fiap.smarthas.exception.ResourceNotFoundException;
-import br.com.fiap.smarthas.repository.FirestoreMessageRepository;
-import br.com.fiap.smarthas.repository.FirestoreResourceRepository;
+import br.com.fiap.smarthas.repository.JdbcMessageRepository;
+import br.com.fiap.smarthas.repository.JdbcResourceRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,12 +22,12 @@ import java.util.List;
 @Service
 public class ResourceService {
 
-    private final FirestoreResourceRepository resourceRepository;
+    private final JdbcResourceRepository resourceRepository;
     private final UserService userService;
-    private final FirestoreMessageRepository messageRepository;
+    private final JdbcMessageRepository messageRepository;
 
-    public ResourceService(FirestoreResourceRepository resourceRepository, UserService userService,
-                            FirestoreMessageRepository messageRepository) {
+    public ResourceService(JdbcResourceRepository resourceRepository, UserService userService,
+                            JdbcMessageRepository messageRepository) {
         this.resourceRepository = resourceRepository;
         this.userService = userService;
         this.messageRepository = messageRepository;
@@ -37,6 +37,17 @@ public class ResourceService {
                                           String q, Pageable pageable) {
         return resourceRepository.search(category, type, availability, q, pageable)
                 .map(ResourceResponse::from);
+    }
+
+    /**
+     * Vitrine ordenada por proximidade. A distancia e calculada pela function
+     * FN_SH_DISTANCIA_KM dentro do Oracle, entao a ordenacao vale igual para o
+     * aplicativo e para o painel.
+     */
+    public List<ResourceResponse> getNearby(double latitude, double longitude, int limit) {
+        return resourceRepository.findNearby(latitude, longitude, limit).stream()
+                .map(ResourceResponse::from)
+                .toList();
     }
 
     public ResourceResponse getById(String id) {

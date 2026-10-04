@@ -43,11 +43,18 @@
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
 
-		<!-- Firebase Admin SDK (Firestore + Firebase Authentication) -->
+		<!-- Persistencia Oracle (Fase 6): JdbcTemplate/SimpleJdbcCall + driver.
+		     Substituiu o Firebase Admin SDK, que era o backend de dados ate a
+		     Fase 5. Sem JPA de proposito: as regras de negocio agora moram em
+		     procedures PL/SQL e o acesso e feito por SQL e chamadas de rotina. -->
 		<dependency>
-			<groupId>com.google.firebase</groupId>
-			<artifactId>firebase-admin</artifactId>
-			<version>9.4.1</version>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.oracle.database.jdbc</groupId>
+			<artifactId>ojdbc11</artifactId>
+			<version>23.6.0.24.10</version>
 		</dependency>
 
 		<!-- Pageable/Page abstractions, used for list endpoints (no JPA needed) -->

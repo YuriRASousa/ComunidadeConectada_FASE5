@@ -1,38 +1,46 @@
 # Smart HAS API (ComunidadeConectada) — Backend
 
-Backend Spring Boot para o app Smart HAS / ComunidadeConectada (Fase 5, Cap 1 — FIAP).
-Implementa a especificação em `../../API_CONTRACT.md`.
+Backend Spring Boot do Smart HAS / ComunidadeConectada (FIAP). Implementa a especificação em
+`../../API_CONTRACT.md`.
 
-> **Migração para Firebase (Fase 5, Cap 1):** este backend deixou de usar H2/Spring Data JPA e passou a
-> persistir em **Firestore** (dados) + **Firebase Authentication** (identidade/senha). O contrato de API
-> para os clientes não mudou — mesmos endpoints, mesmo fluxo `Bearer <token>` emitido pelo próprio backend
-> — só os IDs deixaram de ser `Long` e passaram a ser Strings opacas (UID do Firebase Auth para `User`,
-> ID de documento do Firestore para `Resource`/`Message`).
+> **Fase 6 — migração para Oracle.** O backend deixou de usar Firebase (Firestore + Firebase
+> Authentication) e passou a persistir em **Oracle**, com as regras de negócio dentro do banco, em
+> procedures e functions PL/SQL. O contrato de API não mudou para os clientes: mesmos endpoints, mesmo
+> fluxo `Bearer <token>` emitido pelo próprio backend, IDs continuam como String (agora o NUMBER da
+> sequence, convertido). O que mudou é quem decide: uma solicitação de empréstimo é validada pela
+> procedure, não pelo Java.
 
 ## Stack
 
 - Java 21, Spring Boot 4.1.0
-- Spring Web MVC, Spring Security (JWT stateless — jjwt 0.12.6)
-- **Firebase Admin SDK** (`com.google.firebase:firebase-admin:9.4.1`) — Firestore para dados
-- **Firebase Authentication** (Identity Toolkit) — dono da senha do usuário; o backend nunca guarda hash de senha
+- Spring Web MVC, Spring Security (JWT stateless — jjwt 0.12.6), BCrypt para a senha
+- **Spring JDBC** (`JdbcTemplate`, `SimpleJdbcCall`) e driver **ojdbc11** para o Oracle
 - `spring-data-commons` (só `Pageable`/`Page`, sem JPA) para os endpoints paginados
-- springdoc-openapi 2.8.9 (Swagger UI)
-- Lombok, Bean Validation
+- springdoc-openapi (Swagger UI), Lombok, Bean Validation
 
-## Pré-requisitos para rodar
+## Pré-requisitos
 
-1. **JDK 21** instalado (o wrapper Maven baixa o Maven sozinho).
-2. Um projeto Firebase com:
-   - **Firestore Database** habilitado (usado neste projeto em modo de teste).
-   - **Firebase Authentication** habilitado com o provedor **Email/Password**.
-3. O arquivo de credenciais da service account salvo em
-   **`backend/smarthas-api/config/firebase-service-account.json`** (já está no `.gitignore` — nunca commitar
-   esse arquivo). O caminho é relativo ao diretório de trabalho do processo, então rode os comandos abaixo
-   **a partir de `backend/smarthas-api`**.
-4. A **Web API Key** do projeto Firebase configurada em `src/main/resources/application.properties`
-   (`firebase.web-api-key=...`) — necessária porque o Admin SDK não tem uma API de verificação de senha
-   server-side; o login chama a Identity Toolkit REST API (`accounts:signInWithPassword`) com essa chave.
-5. O **Project ID** do Firebase em `firebase.project-id` (mesmo arquivo de properties).
+1. **JDK 21** (o wrapper Maven baixa o Maven sozinho).
+2. Acesso a um schema Oracle. No ambiente da FIAP: `oracle.fiap.com.br:1521:ORCL`, usuário `RM<matrícula>`.
+3. Os scripts de `../../database/` executados na ordem:
+
+```
+01_ddl.sql  →  02_seed.sql  →  03_log.sql  →  04_functions.sql  →  05_procedures.sql
+```
+
+`06_consultas.sql` é opcional e serve para conferir a instalação. `99_drop.sql` remove tudo para recomeçar.
+
+## Credenciais
+
+Nada de credencial no repositório. Copie o arquivo de exemplo e preencha:
+
+```bash
+cd backend/smarthas-api
+cp config/oracle.properties.example config/oracle.properties
+```
+
+`config/oracle.properties` está no `.gitignore`. As mesmas informações também podem vir de variáveis de
+ambiente: `ORACLE_URL`, `ORACLE_USER`, `ORACLE_PASSWORD` (e `JWT_SECRET` para o segredo do token).
 
 ## Como rodar
 
@@ -48,132 +56,124 @@ ou, para gerar e rodar o jar:
 java -jar target/smarthas-api-0.0.1-SNAPSHOT.jar
 ```
 
-A API sobe em `http://localhost:8080`.
+A API sobe em `http://localhost:8080`. Não há mais seeder no código: os dados de exemplo vêm do
+`02_seed.sql` (8 moradores, 20 recursos, 15 empréstimos, avaliações e mensagens).
 
-Na primeira subida, um `CommandLineRunner` (`DataSeeder`) popula o Firestore/Firebase Auth (só roda se a
-coleção `users` do Firestore estiver vazia) com:
+## Comunicação segura
 
-- **Admin**: `admin@smarthas.com` / `admin123` (ROLE_ADMIN)
-- **Demo (Yuri)**: `yuri@exemplo.com` / `123456` — reputação 4.9, 12 transações, verificado
-- **João Silva**: `joao.silva@exemplo.com` / `123456`
-- **Maria Oliveira**: `maria.oliveira@exemplo.com` / `123456`
-- **Carlos Souza**: `carlos.souza@exemplo.com` / `123456`
-- 3 recursos demo: Furadeira Bosch (João), Cadeira de Rodas (Maria), Livro Dom Casmurro (Carlos)
+A avaliação da fase anterior apontou que o projeto trafegava em HTTP puro. Nesta fase o backend passou a
+falar TLS, e o transporte virou uma questão de perfil, não de reescrita:
 
-Se uma subida anterior já tiver criado parcialmente algum desses usuários no Firebase Authentication (mas
-não no Firestore), o seeder detecta isso por email e reaproveita a conta em vez de falhar.
+```bash
+config\gerar_certificado.bat                  # cria config/smarthas-local.p12 (fora do git)
+./mvnw spring-boot:run -Dspring-boot.run.profiles=https
+```
+
+- `application-https.properties` liga `server.ssl`, sobe na porta **8443** e aceita **apenas TLS 1.2 e 1.3**.
+- O certificado é autoassinado e vale só para desenvolvimento. Em produção entra um certificado emitido por
+  uma autoridade certificadora, apontando `SSL_KEYSTORE` e `SSL_KEYSTORE_PASSWORD` para ele: nada mais muda.
+- Com TLS ativo, as respostas passam a levar `Strict-Transport-Security` (um ano, incluindo subdomínios).
+  Em HTTP o cabeçalho fica desligado de propósito, porque ali ele não protege nada.
+- O painel Angular aponta para `https://localhost:8443/api` no build de produção
+  (`environment.prod.ts`); o app aceita `EXPO_PUBLIC_API_URL` para o mesmo fim.
+
+O CORS também deixou de ser curinga. Antes era `allowedOriginPatterns("*")` junto com
+`allowCredentials(true)`, a combinação mais permissiva possível. Agora a lista é fechada e vem de
+`smarthas.cors.allowed-origins` (sobrescrevível por `CORS_ORIGINS`), com as origens do painel e do app.
+Requisição sem cabeçalho `Origin`, como a do app nativo, não passa por CORS e continua funcionando.
+
+Verificação feita com a aplicação no ar:
+
+```
+protocolo negociado: TLSv1.3   cifra: TLS_AES_256_GCM_SHA384
+Strict-Transport-Security: max-age=31536000 ; includeSubDomains
+Origin http://localhost:4200        -> 200 (Access-Control-Allow-Origin devolvido)
+Origin http://site-malicioso.example -> 403
+handshake forçado em TLS 1.1        -> recusado
+```
 
 ## Swagger / OpenAPI
 
-- Swagger UI: `http://localhost:8080/swagger-ui/index.html` (também responde em `/swagger-ui.html`)
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
-Use o botão "Authorize" no Swagger com `Bearer <token>` obtido em `/api/auth/login` para testar rotas autenticadas.
+Use "Authorize" com `Bearer <token>` obtido em `/api/auth/login` para testar as rotas protegidas.
 
 ## Autenticação
 
-- `POST /api/auth/register` (`{ name, email, password, address }`): cria o usuário no Firebase Authentication
-  (`accounts:create`), grava o perfil em `Firestore/users/{uid}`, e emite **nosso próprio JWT** (jjwt, mesma
-  estrutura de sempre) com o UID do Firebase como `subject`. Retorna `{ token, user }`, `201`.
-- `POST /api/auth/login` (`{ email, password }`): valida a senha chamando a Identity Toolkit REST API
-  (`accounts:signInWithPassword`) diretamente — o Admin SDK não oferece essa verificação. Em caso de sucesso,
-  busca o perfil em `Firestore/users/{uid}` e emite o mesmo tipo de JWT. Retorna `{ token, user }`, `200`.
-- Envie `Authorization: Bearer <token>` nas rotas protegidas — nada muda do ponto de vista do cliente.
+- `POST /api/auth/register`: grava o morador em `SH_USUARIO` com o hash BCrypt da senha
+  (`DS_SENHA_HASH`) e emite o JWT.
+- `POST /api/auth/login`: lê o hash pelo e-mail, confere com `BCryptPasswordEncoder#matches` e emite o
+  mesmo tipo de JWT. Não há mais chamada HTTP externa no login.
+- O `subject` do token é o id do usuário no Oracle; `CustomUserDetailsService` resolve o perfil por esse id.
 
-### Sobre a implementação (bug real encontrado e a decisão de arquitetura que resultou)
+## Camadas
 
-O Firebase Admin SDK para Java (`firebase-admin`) usa internamente o `google-http-client`, que pede
-respostas HTTP comprimidas em gzip. Nesta máquina de desenvolvimento (Windows), **toda** chamada feita por
-esse cliente ao `identitytoolkit.googleapis.com` (`FirebaseAuth#createUser`, `#getUserByEmail`) falhava
-consistentemente (100% de reprodução em 2 execuções completas + 6 retries por chamada) com
-`java.util.zip.ZipException: Not in GZIP format` — sintoma clássico de um proxy/antivírus com inspeção TLS
-que descomprime a resposta de forma transparente mas não remove o cabeçalho `Content-Encoding: gzip`.
+```
+Controller  →  Service  →  Repository (JdbcTemplate / SimpleJdbcCall)  →  Oracle
+```
 
-Em vez de tentar contornar isso no transporte HTTP interno do Admin SDK (não há um hook exposto para isso),
-a criação/consulta de usuários no Firebase Authentication foi implementada com chamadas REST diretas à
-Identity Toolkit Admin API (`accounts:create`, `accounts:lookup`) usando `java.net.http.HttpClient` — a
-mesma abordagem já usada para verificar a senha no login — autenticadas com um access token OAuth2 obtido a
-partir da mesma service account (`GoogleCredentials`). Esse cliente HTTP não pede gzip por padrão e nunca
-reproduziu o problema. Essa lógica está em `br.com.fiap.smarthas.security.FirebaseAuthAdminClient`; veja o
-Javadoc da classe para o diagnóstico completo. O Firestore (que usa gRPC, não HTTP+gzip) não foi afetado.
+- `JdbcUserRepository`, `JdbcResourceRepository`, `JdbcMessageRepository`: CRUD com SQL explícito,
+  paginação com `OFFSET ? ROWS FETCH NEXT ? ROWS ONLY` e filtros montados no `WHERE`.
+- `JdbcEmprestimoRepository`: ponte com o PL/SQL. Declara os parâmetros na mão
+  (`withoutProcedureColumnMetaDataAccess`), porque ler metadados do dicionário exige privilégio extra no
+  schema do aluno.
+- `JdbcPainelRepository`: leituras do painel que saem das tabelas alimentadas pelas rotinas
+  (`SH_ALERTA` e `SH_RESUMO_USUARIO_MES`).
 
-## Principais endpoints
+## Endpoints que chegam ao PL/SQL
 
-Ver `../../API_CONTRACT.md` para o contrato completo. Resumo:
+| Rota | Objeto no Oracle |
+| --- | --- |
+| `POST /api/emprestimos` | `PRC_SH_REGISTRA_EMPRESTIMO` |
+| `POST /api/emprestimos/{id}/devolucao` | `PRC_SH_REGISTRA_DEVOLUCAO` |
+| `GET /api/emprestimos/meus` | consulta sobre `SH_EMPRESTIMO` |
+| `GET /api/emprestimos/indice-circularidade` | `FN_SH_INDICE_CIRCULARIDADE` |
+| `GET /api/emprestimos/ficha/{resourceId}` | `FN_SH_FICHA_RECURSO` |
+| `GET /api/resources/proximos` | `FN_SH_DISTANCIA_KM` |
+| `POST /api/admin/rotinas/detectar-atrasos` | `PRC_SH_DETECTA_ATRASOS` |
+| `POST /api/admin/rotinas/resumo-mensal` | `PRC_SH_GERA_RESUMO_MENSAL` |
+| `GET /api/admin/alertas` | `SH_ALERTA` |
+| `GET /api/admin/resumo-mensal` | `SH_RESUMO_USUARIO_MES` |
 
-- `POST /api/auth/register`, `POST /api/auth/login`
-- `GET/PUT /api/users/me`, `GET /api/users/{id}` (público), `GET /api/users` (ADMIN), `DELETE /api/users/{id}` (ADMIN)
-- `GET /api/resources` (público, paginado/filtrável), `GET /api/resources/{id}` (público), `GET /api/resources/mine` (auth), `POST /api/resources` (auth), `PUT/DELETE /api/resources/{id}` (auth, dono ou ADMIN)
-- `GET /api/messages/conversations`, `GET /api/messages/conversation/{userId}`, `POST /api/messages`, `PUT /api/messages/{id}/read` (todos auth)
-- `GET /api/admin/stats` (ADMIN)
+Demais endpoints (usuários, recursos, mensagens, `/api/admin/stats`) seguem iguais aos da fase anterior.
 
-## Modelo de dados no Firestore
+## Erros de negócio
 
-- `users/{uid}` (documento ID = Firebase Auth UID): `name`, `email`, `address`, `profileImageUrl`,
-  `reputation`, `totalTransactions`, `isVerified`, `role`, `createdAt`. **Sem senha/hash** — a senha vive
-  inteiramente no Firebase Authentication.
-- `resources/{autoId}`: `title`, `description`, `category`, `condition`, `type`, `availability`, `imageUrl`,
-  `latitude`, `longitude`, `offerantId`, `offerantName`, `createdAt`, `updatedAt`.
-- `messages/{autoId}`: `senderId`, `receiverId`, `resourceId`, `content`, `timestamp`, `read`.
+As procedures recusam operação inválida com `RAISE_APPLICATION_ERROR` entre -20000 e -20999.
+`OracleErrors` extrai só a primeira linha da mensagem (descartando a pilha `ORA-06512`) e
+`GlobalExceptionHandler` converte o código em status HTTP:
 
-### Filtros e paginação (`GET /api/resources`)
+| Código | Situação | HTTP |
+| --- | --- | --- |
+| -20201 | Recurso ou solicitante inexistente | 404 |
+| -20202 | Solicitante inativo | 409 |
+| -20203 | O solicitante é o dono do item | 409 |
+| -20204 | Item é troca ou doação, não empréstimo | 409 |
+| -20205 | Item reservado ou indisponível | 409 |
+| -20206 | Empréstimo inexistente | 404 |
+| -20207 | Empréstimo já devolvido ou cancelado | 409 |
+| -20208 | Avaliação já registrada por este morador | 409 |
+| -20101 | Competência fora do formato AAAAMM | 400 |
 
-`category`/`type`/`availability` são aplicados como `whereEqualTo` no Firestore. `q` (busca livre) e a
-paginação em si são feitos **em memória** após buscar o conjunto já filtrado pelos campos exatos — decisão
-pragmática, já que o Firestore não tem busca full-text nativa e o volume de dados deste projeto de faculdade
-é pequeno. Documentado aqui em vez de implementar Algolia/Typesense/etc., fora de escopo para a tarefa.
+O texto que chega na tela do morador é o texto escrito dentro da procedure.
 
-## Verificação realizada (via curl, contra a aplicação rodando de verdade)
+## Modelo de dados
 
-- `./mvnw -q compile` — sem erros.
-- `./mvnw spring-boot:run` de fato executado; seed rodou com sucesso (`Seed data criada: 5 usuários, 3 recursos.`).
-- `GET /api/resources` → `200`, mostra os 3 recursos seedados com IDs de documento do Firestore (String).
-- `POST /api/auth/login` como admin (`admin@smarthas.com`/`admin123`) → `200`, `{token, user}` com `id` = UID do Firebase.
-- `POST /api/auth/register` de um novo usuário → `201`; login imediato em seguida com as mesmas credenciais → `200`
-  (confirma que o usuário foi mesmo criado no Firebase Authentication, não só simulado).
-- `POST /api/resources` autenticado como o usuário recém-registrado → `201`, `offerantId`/`offerantName`
-  resolvidos corretamente a partir do JWT.
-- `GET /api/admin/stats` como ADMIN → `200`, contagens corretas (`totalUsers`, `totalResources`, `resourcesByCategory`).
-- `GET /api/users?page=0&size=10` como ADMIN → `200`, paginação funcionando.
-- `POST /api/messages` (admin → usuário) → `201`; `GET /api/messages/conversations` e
-  `GET /api/messages/conversation/{userId}` refletindo a mensagem; `PUT /api/messages/{id}/read` → `200`, `read: true`.
-- Swagger UI (`/swagger-ui/index.html`) e OpenAPI JSON (`/v3/api-docs`) → `200`.
-- Dashboard Angular (`web/smarthas-admin`): `npx ng build` sem erros de TypeScript após ajustar `id: number` →
-  `id: string` em `models.ts` e nos serviços; smoke-check via curl contra `http://localhost:8080/api`
-  confirmando que login/listagem de usuários/listagem de recursos retornam o shape que o dashboard consome.
+Nove tabelas com prefixo `SH_`: `sh_categoria`, `sh_usuario`, `sh_recurso`, `sh_mensagem`,
+`sh_emprestimo`, `sh_avaliacao`, `sh_alerta`, `sh_resumo_usuario_mes` e `sh_log_sistema`. O DER está em
+`docs/DER_SmartHAS_Fase6.png` e o dicionário no documento da fase.
 
-## Bugs encontrados e corrigidos durante a migração
+Pontos que o modelo relacional passou a garantir e o Firestore não garantia: categoria só existe se estiver
+em `SH_CATEGORIA`, e-mail é único, nota vai de 1 a 5, status e disponibilidade são validados por `CHECK`, e
+o resumo tem uma linha por morador e competência (chave composta).
 
-1. **`java.util.zip.ZipException: Not in GZIP format` no Firebase Admin SDK** (ver seção "Sobre a
-   implementação" acima) — resolvido roteando `createUser`/`getUserByEmail` por chamadas REST diretas com
-   `java.net.http.HttpClient` em vez do transporte HTTP interno do `firebase-admin`.
-2. **`Pageable`/`Page` pararam de resolver nos controllers (`No primary or single unique constructor found
-   for interface org.springframework.data.domain.Pageable`)**: ao remover `spring-boot-starter-data-jpa`,
-   a auto-configuração `SpringDataWebAutoConfiguration` do Spring Boot deixou de ativar automaticamente
-   (ela é condicionada à presença de certas classes que vinham transitivamente pelo starter JPA). Corrigido
-   adicionando `spring-data-commons` como dependência explícita e uma classe `WebConfig` com
-   `@EnableSpringDataWebSupport` para forçar o registro do `PageableHandlerMethodArgumentResolver`.
-3. **Ordem das regras de autorização** (já corrigido na versão H2 e mantido): as rotas específicas
-   `GET /api/users/me` e `GET /api/resources/mine` precisam vir antes das regras `permitAll` mais genéricas
-   em `SecurityConfig`, senão o Spring Security aplica a primeira regra que casar com o caminho.
-
-## Decisões e desvios do contrato
-
-- O contrato descreve `verified` no corpo da entidade `User`, mas a resposta é serializada como `isVerified`
-  (mantido igual à versão anterior).
-- CORS: liberado com `allowedOriginPatterns("*")` e `allowCredentials(true)`, cobrindo tanto
-  `http://localhost:4200` (dashboard Angular) quanto chamadas do app mobile (sem origem).
-- `GET /api/messages/conversation/{userId}` aceita `?resourceId=` opcional conforme contrato.
-- IDs: `Long` → `String` em toda a API, conforme a nota de migração em `../../API_CONTRACT.md`.
+Exclusão de usuário é lógica (`ST_USUARIO = 'I'`): empréstimos e avaliações precisam continuar existindo
+para os indicadores fecharem.
 
 ## Known issues / limitações
 
-- Sem testes automatizados (unitários/integração) — a verificação foi feita via curl manual contra a
-  aplicação rodando, conforme pedido na tarefa.
-- Busca por `q` em `/api/resources` é feita em memória (ver seção "Filtros e paginação" acima) — não escala
-  para um volume grande de recursos, mas é adequado ao escopo deste projeto.
-- O ambiente de desenvolvimento usado tem algum componente de rede (antivírus/proxy com inspeção TLS) que
-  corrompe respostas HTTP gzip para `googleapis.com` quando usadas pelo `google-http-client` do Firebase
-  Admin SDK — contornado conforme descrito acima, mas vale ter em mente ao rodar em outra máquina: se o
-  login (que usa `java.net.http.HttpClient` puro) funcionar mas `FirebaseAuth` direto falhar, é o mesmo
-  sintoma.
+- Sem testes automatizados além do `contextLoads`. A verificação é manual, contra a aplicação rodando.
+- As duas rotinas (`detectar-atrasos` e `resumo-mensal`) são disparadas pelo painel. Agendá-las com
+  `DBMS_SCHEDULER` é o próximo passo natural.
+- O pool Hikari está limitado a 5 conexões porque o schema do aluno na FIAP tem limite baixo de sessões.

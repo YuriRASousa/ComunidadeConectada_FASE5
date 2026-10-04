@@ -7,6 +7,7 @@ import {
   Camera,
   Star,
   Repeat2,
+  ArrowLeftRight,
   Package,
   Bell,
   MapPin,
@@ -29,9 +30,20 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamList>
 >;
 
-function OptionTile({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
+function OptionTile({
+  icon,
+  title,
+  subtitle,
+  onPress,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  onPress?: () => void;
+}) {
+  const Container: any = onPress ? TouchableOpacity : View;
   return (
-    <View style={styles.optionTile}>
+    <Container style={styles.optionTile} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.optionIcon}>{icon}</View>
       <View style={{ flex: 1, marginLeft: 12 }}>
         <Text style={styles.optionTitle}>{title}</Text>
@@ -40,7 +52,7 @@ function OptionTile({ icon, title, subtitle }: { icon: React.ReactNode; title: s
         </Text>
       </View>
       <ChevronRight color={colors.grey400} size={18} />
-    </View>
+    </Container>
   );
 }
 
@@ -158,6 +170,14 @@ export default function ProfileScreen({ navigation }: Props) {
               </View>
             ))
           )}
+
+          <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Circulação</Text>
+          <OptionTile
+            icon={<ArrowLeftRight color={colors.primaryBlue} size={18} />}
+            title="Meus Empréstimos"
+            subtitle="Pedidos, prazos e devoluções"
+            onPress={() => navigation.navigate('MyLoans')}
+          />
 
           <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Configurações</Text>
           <OptionTile

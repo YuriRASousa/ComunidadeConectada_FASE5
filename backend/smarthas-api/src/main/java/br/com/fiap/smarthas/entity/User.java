@@ -1,7 +1,6 @@
 package br.com.fiap.smarthas.entity;
 
 import br.com.fiap.smarthas.entity.enums.Role;
-import com.google.cloud.firestore.annotation.Exclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,10 +10,12 @@ import lombok.Setter;
 import java.util.Date;
 
 /**
- * Firestore document in the {@code users} collection.
- * Document ID = Firebase Authentication UID (kept out of the stored fields
- * via {@link Exclude}, populated manually after each read).
- * The password itself is never stored here - Firebase Authentication owns it.
+ * Morador da comunidade, correspondente a uma linha da tabela SH_USUARIO.
+ *
+ * <p>O id continua sendo texto na aplicacao para nao quebrar o contrato JSON
+ * usado pelo aplicativo e pelo painel; no banco ele e o NUMBER da sequence
+ * SQ_SH_USUARIO. O hash da senha fica apenas no banco e nunca sobe para esta
+ * classe, entao nao ha risco de ele vazar em uma resposta da API.</p>
  */
 @Getter
 @Setter
@@ -23,7 +24,6 @@ import java.util.Date;
 @Builder
 public class User {
 
-    @Exclude
     private String id;
 
     private String name;

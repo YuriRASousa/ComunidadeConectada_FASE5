@@ -4,6 +4,7 @@ export type RootStackParamList = {
   Main: undefined;
   ResourceDetail: { resourceId: string };
   Chat: { resourceId: string; resourceTitle: string; offerantId: string };
+  MyLoans: undefined;
 };
 
 export type MainTabParamList = {

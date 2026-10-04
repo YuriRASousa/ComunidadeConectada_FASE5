@@ -113,6 +113,149 @@
         </div>
       </section>
 
+      <!-- ============ FASE 6: ROTINAS PL/SQL, ALERTAS E RESUMO ============ -->
+      <section class="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_24px_-14px_rgba(15,23,42,0.1)]">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="m-0 flex items-center gap-2 text-[15px] font-bold text-navy">
+              <svg lucideRefreshCw [size]="17" class="text-slate-400"></svg>
+              Rotinas do banco
+            </h2>
+            <p class="m-0 mt-1 text-[12.5px] text-slate-400">
+              As duas rotinas rodam dentro do Oracle. O painel apenas dispara e le o resultado.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2.5">
+            <button
+              class="inline-flex items-center gap-2 rounded-xl bg-navy px-4 py-2.5 text-[13px] font-bold text-white transition hover:bg-navy/90 disabled:cursor-not-allowed disabled:opacity-60"
+              [disabled]="rotinaLoading"
+              (click)="detectarAtrasos()"
+            >
+              <svg lucideBell [size]="15"></svg>
+              Detectar atrasos
+            </button>
+            <button
+              class="inline-flex items-center gap-2 rounded-xl bg-sky px-4 py-2.5 text-[13px] font-bold text-white shadow-lg shadow-sky/25 transition hover:bg-sky-dark disabled:cursor-not-allowed disabled:opacity-60"
+              [disabled]="rotinaLoading"
+              (click)="gerarResumo()"
+            >
+              <svg lucideTrendingUp [size]="15"></svg>
+              Gerar resumo do mes
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-4 rounded-xl border border-emerald-200 bg-brand-green-light px-4 py-3 text-sm text-emerald-700" *ngIf="rotinaMensagem">{{ rotinaMensagem }}</div>
+        <div class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600" *ngIf="rotinaError">{{ rotinaError }}</div>
+
+        <h3 class="mb-3 mt-6 text-[12px] font-bold uppercase tracking-wide text-slate-400">Alertas abertos</h3>
+        <p class="text-sm text-slate-400" *ngIf="alertasLoading">Carregando...</p>
+        <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600" *ngIf="alertasError">{{ alertasError }}</div>
+        <ul class="m-0 list-none space-y-2 p-0" *ngIf="!alertasLoading && alertas.length > 0">
+          <li *ngFor="let alerta of alertas" class="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+            <span
+              class="mt-0.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+              [class.bg-red-100]="alerta.severity === 'ALTA'"
+              [class.text-red-700]="alerta.severity === 'ALTA'"
+              [class.bg-amber-100]="alerta.severity === 'MEDIA'"
+              [class.text-amber-700]="alerta.severity === 'MEDIA'"
+              [class.bg-slate-200]="alerta.severity === 'BAIXA'"
+              [class.text-slate-600]="alerta.severity === 'BAIXA'"
+            >{{ alerta.severity }}</span>
+            <div class="min-w-0 flex-1">
+              <div class="text-[13.5px] font-semibold text-navy">{{ alerta.message }}</div>
+              <div class="text-[11.5px] text-slate-400">{{ alerta.type }} | {{ alerta.createdAt | date: 'dd/MM/yyyy HH:mm' }}</div>
+            </div>
+            <button
+              class="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-500 transition hover:bg-slate-100"
+              (click)="resolverAlerta(alerta)"
+            >
+              Resolver
+            </button>
+          </li>
+        </ul>
+        <p class="text-sm italic text-slate-400" *ngIf="!alertasLoading && alertas.length === 0 && !alertasError">
+          Nenhum alerta aberto.
+        </p>
+
+        <h3 class="mb-3 mt-7 text-[12px] font-bold uppercase tracking-wide text-slate-400">Resumo do mes por morador</h3>
+        <p class="text-sm text-slate-400" *ngIf="resumoLoading">Carregando...</p>
+        <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600" *ngIf="resumoError">{{ resumoError }}</div>
+        <div class="overflow-x-auto rounded-xl border border-slate-100" *ngIf="!resumoLoading && resumo.length > 0">
+          <table class="w-full border-collapse text-left text-[13.5px]">
+            <thead>
+              <tr class="border-b border-slate-100 bg-slate-50">
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Morador</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Publicados</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Emprestou</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Pegou</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Atrasos</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Circularidade</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let linha of resumo" class="border-b border-slate-50 transition last:border-b-0 hover:bg-slate-50/70">
+                <td class="px-4 py-3 font-semibold text-navy">{{ linha.userName }}</td>
+                <td class="px-4 py-3 text-slate-600">{{ linha.publishedResources }}</td>
+                <td class="px-4 py-3 text-slate-600">{{ linha.lentOut }}</td>
+                <td class="px-4 py-3 text-slate-600">{{ linha.borrowed }}</td>
+                <td class="px-4 py-3 text-slate-600">{{ linha.lateReturns }}</td>
+                <td class="px-4 py-3 font-bold text-navy">{{ linha.circularityIndex | number: '1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-sm italic text-slate-400" *ngIf="!resumoLoading && resumo.length === 0 && !resumoError">
+          Nenhuma linha consolidada para este mes. Use o botao Gerar resumo do mes.
+        </p>
+      </section>
+
+      <!-- ===================== EMPRESTIMOS EM ABERTO ===================== -->
+      <section class="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_24px_-14px_rgba(15,23,42,0.1)]">
+        <h2 class="mb-4 flex items-center gap-2 text-[15px] font-bold text-navy">
+          <svg lucideArrowLeftRight [size]="17" class="text-slate-400"></svg>
+          Emprestimos em aberto
+        </h2>
+
+        <p class="text-sm text-slate-400" *ngIf="emprestimosLoading">Carregando...</p>
+        <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600" *ngIf="emprestimosError">{{ emprestimosError }}</div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-100" *ngIf="!emprestimosLoading && emprestimos.length > 0">
+          <table class="w-full border-collapse text-left text-[13.5px]">
+            <thead>
+              <tr class="border-b border-slate-100 bg-slate-50">
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Item</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Dono</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Com quem esta</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Devolver ate</th>
+                <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">Situacao</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let emp of emprestimos" class="border-b border-slate-50 transition last:border-b-0 hover:bg-slate-50/70">
+                <td class="px-4 py-3 font-semibold text-navy">{{ emp.resourceTitle }}</td>
+                <td class="px-4 py-3 text-slate-500">{{ emp.ownerName }}</td>
+                <td class="px-4 py-3 text-slate-500">{{ emp.borrowerName }}</td>
+                <td class="px-4 py-3 text-slate-600">{{ emp.dueAt | date: 'dd/MM/yyyy' }}</td>
+                <td class="px-4 py-3">
+                  <span
+                    class="rounded-full px-2.5 py-1 text-[11.5px] font-semibold"
+                    [class.bg-red-100]="emp.daysLate > 0"
+                    [class.text-red-700]="emp.daysLate > 0"
+                    [class.bg-sky-light]="emp.daysLate === 0"
+                    [class.text-sky-dark]="emp.daysLate === 0"
+                  >{{ emp.daysLate > 0 ? emp.daysLate + ' dia(s) de atraso' : emp.status }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="text-sm italic text-slate-400" *ngIf="!emprestimosLoading && emprestimos.length === 0 && !emprestimosError">
+          Nenhum emprestimo em aberto.
+        </p>
+      </section>
+
       <!-- ===================== USERS ===================== -->
       <section class="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_24px_-14px_rgba(15,23,42,0.1)]">
         <h2 class="mb-4 flex items-center gap-2 text-[15px] font-bold text-navy">

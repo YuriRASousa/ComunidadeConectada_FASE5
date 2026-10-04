@@ -10,6 +10,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  * de lib/services/api_service.dart no app Flutter original.
  */
 export function getBaseUrl(): string {
+  // Permite apontar o app para um backend em TLS sem recompilar nada:
+  //   EXPO_PUBLIC_API_URL=https://localhost:8443/api npx expo start
+  // Sem essa variável, vale o padrão de desenvolvimento em HTTP.
+  const configurada = process.env.EXPO_PUBLIC_API_URL;
+  if (configurada && configurada.length > 0) {
+    return configurada;
+  }
   if (Platform.OS === 'android') {
     return 'http://10.0.2.2:8080/api';
   }

@@ -6,6 +6,7 @@ import LoginScreen from '../screens/LoginScreen';
 import MainTabs from './MainTabs';
 import ResourceDetailScreen from '../screens/ResourceDetailScreen';
 import ChatScreen from '../screens/ChatScreen';
+import MyLoansScreen from '../screens/MyLoansScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -29,6 +30,7 @@ export default function RootNavigator() {
         options={{ title: 'Detalhes do Recurso' }}
       />
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Conversa' }} />
+      <Stack.Screen name="MyLoans" component={MyLoansScreen} options={{ title: 'Meus Empréstimos' }} />
     </Stack.Navigator>
   );
 }

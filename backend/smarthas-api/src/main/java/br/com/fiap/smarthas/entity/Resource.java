@@ -4,7 +4,6 @@ import br.com.fiap.smarthas.entity.enums.Availability;
 import br.com.fiap.smarthas.entity.enums.Category;
 import br.com.fiap.smarthas.entity.enums.Condition;
 import br.com.fiap.smarthas.entity.enums.ResourceType;
-import com.google.cloud.firestore.annotation.Exclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,7 +13,7 @@ import lombok.Setter;
 import java.util.Date;
 
 /**
- * Firestore document in the {@code resources} collection (auto-generated ID).
+ * Item oferecido a comunidade, correspondente a uma linha de SH_RECURSO.
  */
 @Getter
 @Setter
@@ -23,7 +22,6 @@ import java.util.Date;
 @Builder
 public class Resource {
 
-    @Exclude
     private String id;
 
     private String title;

@@ -15,6 +15,10 @@ import {
   LucideXCircle,
   LucideLoaderCircle,
   LucideArrowRight,
+  LucideBell,
+  LucideRefreshCw,
+  LucideTrendingUp,
+  LucideArrowLeftRight,
 } from '@lucide/angular';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -23,7 +27,10 @@ import { UserService } from '../../core/services/user.service';
 import { ResourceService } from '../../core/services/resource.service';
 import {
   AdminStats,
+  Alerta,
   ApiError,
+  Emprestimo,
+  ResumoUsuario,
   NewResource,
   Resource,
   ResourceCategory,
@@ -50,6 +57,10 @@ import {
     LucideXCircle,
     LucideLoaderCircle,
     LucideArrowRight,
+    LucideBell,
+    LucideRefreshCw,
+    LucideTrendingUp,
+    LucideArrowLeftRight,
   ],
   templateUrl: './admin.html',
   styleUrl: './admin.css',
@@ -69,6 +80,23 @@ export class Admin implements OnInit {
   resources: Resource[] = [];
   resourcesLoading = false;
   resourcesError = '';
+
+  // --- Fase 6: emprestimos, alertas e resumo vindos do Oracle ---
+  emprestimos: Emprestimo[] = [];
+  emprestimosLoading = false;
+  emprestimosError = '';
+
+  alertas: Alerta[] = [];
+  alertasLoading = false;
+  alertasError = '';
+
+  resumo: ResumoUsuario[] = [];
+  resumoLoading = false;
+  resumoError = '';
+
+  rotinaMensagem = '';
+  rotinaError = '';
+  rotinaLoading = false;
 
   // --- create resource form ---
   readonly categories: ResourceCategory[] = [
@@ -105,6 +133,102 @@ export class Admin implements OnInit {
     this.loadStats();
     this.loadUsers();
     this.loadResources();
+    this.loadEmprestimos();
+    this.loadAlertas();
+    this.loadResumo();
+  }
+
+  loadEmprestimos(): void {
+    this.emprestimosLoading = true;
+    this.emprestimosError = '';
+    this.adminService.getEmprestimos().subscribe({
+      next: (lista) => {
+        this.emprestimos = lista ?? [];
+        this.emprestimosLoading = false;
+      },
+      error: (err) => {
+        this.emprestimosError = this.extractError(err, 'Não foi possível carregar os empréstimos.');
+        this.emprestimosLoading = false;
+      },
+    });
+  }
+
+  loadAlertas(): void {
+    this.alertasLoading = true;
+    this.alertasError = '';
+    this.adminService.getAlertas().subscribe({
+      next: (lista) => {
+        this.alertas = lista ?? [];
+        this.alertasLoading = false;
+      },
+      error: (err) => {
+        this.alertasError = this.extractError(err, 'Não foi possível carregar os alertas.');
+        this.alertasLoading = false;
+      },
+    });
+  }
+
+  loadResumo(): void {
+    this.resumoLoading = true;
+    this.resumoError = '';
+    this.adminService.getResumoMensal().subscribe({
+      next: (lista) => {
+        this.resumo = lista ?? [];
+        this.resumoLoading = false;
+      },
+      error: (err) => {
+        this.resumoError = this.extractError(err, 'Não foi possível carregar o resumo mensal.');
+        this.resumoLoading = false;
+      },
+    });
+  }
+
+  /** Executa PRC_SH_DETECTA_ATRASOS e recarrega o que ela alimenta. */
+  detectarAtrasos(): void {
+    this.rotinaLoading = true;
+    this.rotinaMensagem = '';
+    this.rotinaError = '';
+    this.adminService.detectarAtrasos().subscribe({
+      next: (resultado) => {
+        this.rotinaLoading = false;
+        this.rotinaMensagem = resultado.message;
+        this.loadAlertas();
+        this.loadEmprestimos();
+      },
+      error: (err) => {
+        this.rotinaLoading = false;
+        this.rotinaError = this.extractError(err, 'Não foi possível executar a rotina de atrasos.');
+      },
+    });
+  }
+
+  /** Executa PRC_SH_GERA_RESUMO_MENSAL e recarrega a tabela de resumo. */
+  gerarResumo(): void {
+    this.rotinaLoading = true;
+    this.rotinaMensagem = '';
+    this.rotinaError = '';
+    this.adminService.gerarResumoMensal().subscribe({
+      next: (resultado) => {
+        this.rotinaLoading = false;
+        this.rotinaMensagem = resultado.message;
+        this.loadResumo();
+      },
+      error: (err) => {
+        this.rotinaLoading = false;
+        this.rotinaError = this.extractError(err, 'Não foi possível gerar o resumo mensal.');
+      },
+    });
+  }
+
+  resolverAlerta(alerta: Alerta): void {
+    this.adminService.resolverAlerta(alerta.id).subscribe({
+      next: () => {
+        this.alertas = this.alertas.filter((a) => a.id !== alerta.id);
+      },
+      error: (err) => {
+        this.alertasError = this.extractError(err, 'Não foi possível resolver o alerta.');
+      },
+    });
   }
 
   loadStats(): void {

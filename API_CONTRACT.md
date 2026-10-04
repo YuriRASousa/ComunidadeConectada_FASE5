@@ -1,8 +1,8 @@
-# Smart HAS / ComunidadeConectada — Contrato de API (Fase 5, Cap 1)
+# Smart HAS / ComunidadeConectada — Contrato de API (Fase 6)
 
-Backend: Spring Boot (Java 21), Spring Web MVC + Firebase Admin SDK (Firestore para dados, Firebase Authentication para identidade/senha) + Spring Security (JWT próprio emitido pelo backend após validar a senha no Firebase — os clientes continuam usando o mesmo fluxo `Bearer <token>` de sempre, nada muda no consumo da API), documentado com springdoc-openapi (Swagger UI em `/swagger-ui.html`).
+Backend: Spring Boot (Java 21), Spring Web MVC + Spring JDBC sobre **Oracle** + Spring Security (JWT próprio, senha em hash BCrypt na tabela `SH_USUARIO`), documentado com springdoc-openapi (Swagger UI em `/swagger-ui.html`). As regras de negócio de empréstimo e devolução ficam em procedures PL/SQL; o backend chama a procedure e traduz o erro do Oracle para o status HTTP.
 
-> **Atualização (migração para Firebase):** os IDs de entidades deixaram de ser `Long` sequenciais (H2) e passaram a ser **Strings opacas** (UID do Firebase Authentication para `User`, ID de documento do Firestore para `Resource`/`Message`). Todo campo `id`/`*Id` deste contrato deve ser tratado como `String` pelos clientes — o Flutter e o React Native já tratavam IDs como String desde o início; o dashboard Angular precisa ajustar suas interfaces TypeScript (`id: number` → `id: string`).
+> **Atualização (Fase 6, migração para Oracle):** o Firebase saiu por completo. Os IDs continuam sendo **String** no JSON (agora é o NUMBER da sequence convertido), então nada muda para o aplicativo React Native nem para o painel Angular. O que entrou de novo neste contrato são as rotas de empréstimo e as rotas de rotina/indicador do painel, listadas abaixo.
 
 Base URL local: `http://localhost:8080/api`
 
@@ -82,8 +82,26 @@ read: Boolean
 - `POST /api/messages` (auth) → body `{ receiverId, resourceId?, content }`
 - `PUT /api/messages/{id}/read` (auth)
 
+### Emprestimos (Fase 6 — cada rota termina em uma procedure ou function PL/SQL)
+- `POST /api/emprestimos` (auth) → body `{ resourceId, days? }` → 201 `{ id, message }` — executa `PRC_SH_REGISTRA_EMPRESTIMO`
+- `POST /api/emprestimos/{id}/devolucao` (auth) → body opcional `{ rating?, comment? }` → 200 `{ id, message }` — executa `PRC_SH_REGISTRA_DEVOLUCAO`
+- `GET /api/emprestimos/meus` (auth) → lista dos empréstimos em que o usuário é dono ou solicitante
+- `GET /api/emprestimos/indice-circularidade` (auth, `?anoMes=AAAAMM`) → `{ anoMes, indiceCircularidade }` — `FN_SH_INDICE_CIRCULARIDADE`
+- `GET /api/emprestimos/ficha/{resourceId}` (auth) → `{ ficha }` — `FN_SH_FICHA_RECURSO`
+- `GET /api/resources/proximos` (público, `?lat=&lon=&limit=`) → vitrine ordenada por distância — `FN_SH_DISTANCIA_KM`
+
+O objeto de empréstimo devolvido é
+`{ id, resourceId, resourceTitle, borrowerId, borrowerName, ownerName, requestedAt, dueAt, returnedAt, status, daysLate }`,
+com `status` em `SOLICITADO | ATIVO | DEVOLVIDO | CANCELADO`.
+
 ### Admin (dashboard Angular)
 - `GET /api/admin/stats` (ADMIN) → `{ totalUsers, totalResources, totalMessages, resourcesByCategory: {categoria: count} }`
+- `GET /api/admin/emprestimos` (ADMIN) → empréstimos solicitados ou ativos, ordenados pelo vencimento
+- `GET /api/admin/alertas` (ADMIN) → `[{ id, type, referenceId, severity, message, createdAt, resolved }]`
+- `POST /api/admin/alertas/{id}/resolver` (ADMIN) → 204
+- `POST /api/admin/rotinas/detectar-atrasos` (ADMIN) → `{ routine, affectedRows, message }` — `PRC_SH_DETECTA_ATRASOS`
+- `POST /api/admin/rotinas/resumo-mensal` (ADMIN, `?anoMes=AAAAMM`) → `{ routine, affectedRows, message }` — `PRC_SH_GERA_RESUMO_MENSAL`
+- `GET /api/admin/resumo-mensal` (ADMIN, `?anoMes=AAAAMM`) → linhas de `SH_RESUMO_USUARIO_MES`
 
 ## Erros
 
@@ -92,6 +110,10 @@ Formato padrão (via `@ControllerAdvice`):
 { "timestamp": "...", "status": 404, "error": "Not Found", "message": "...", "path": "/api/resources/99" }
 ```
 
+Regra recusada por procedure PL/SQL (`RAISE_APPLICATION_ERROR` entre -20000 e -20999) chega ao cliente no
+mesmo formato, com a mensagem escrita dentro do banco e o status conforme o código: -20201/-20206 → 404,
+-20202 a -20205, -20207 e -20208 → 409, demais → 400.
+
 ## CORS
 
 Liberado para `http://localhost:4200` (dashboard Angular em dev) e demais origens do app mobile (sem restrição de origem para chamadas nativas).
@@ -99,4 +121,4 @@ Liberado para `http://localhost:4200` (dashboard Angular em dev) e demais origen
 ## Papéis (roles)
 
 - `USER`: padrão no registro.
-- `ADMIN`: promovido manualmente (seed inicial cria 1 admin: `admin@smarthas.com` / `admin123`) — usado para logar no dashboard Angular.
+- `ADMIN`: promovido manualmente (a carga `database/02_seed.sql` cria 1 admin: `admin@smarthas.com`) — usado para logar no dashboard Angular.

@@ -8,40 +8,37 @@ import br.com.fiap.smarthas.entity.User;
 import br.com.fiap.smarthas.entity.enums.Role;
 import br.com.fiap.smarthas.exception.ConflictException;
 import br.com.fiap.smarthas.exception.UnauthorizedException;
-import br.com.fiap.smarthas.repository.FirestoreUserRepository;
-import br.com.fiap.smarthas.security.FirebaseAuthAdminClient;
+import br.com.fiap.smarthas.repository.JdbcUserRepository;
 import br.com.fiap.smarthas.security.JwtService;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.Date;
-import java.util.Map;
 
+/**
+ * Cadastro e login dos moradores.
+ *
+ * <p>Na Fase 5 a senha era responsabilidade do Firebase Authentication: o
+ * backend chamava a API do Identity Toolkit para criar o usuario e para
+ * conferir a senha no login. Na Fase 6 o Firebase saiu do projeto e a
+ * identidade passou a viver no Oracle: a senha e gravada como hash BCrypt na
+ * coluna SH_USUARIO.DS_SENHA_HASH e a conferencia acontece aqui mesmo.</p>
+ *
+ * <p>O token JWT continua sendo o mesmo de antes, entao o aplicativo React
+ * Native e o painel Angular nao precisaram de nenhuma alteracao.</p>
+ */
 @Service
 public class AuthService {
 
-    private final FirestoreUserRepository userRepository;
+    private final JdbcUserRepository userRepository;
     private final JwtService jwtService;
-    private final FirebaseAuthAdminClient firebaseAuthAdminClient;
-    private final String webApiKey;
-    private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthService(FirestoreUserRepository userRepository, JwtService jwtService,
-                        FirebaseAuthAdminClient firebaseAuthAdminClient,
-                        @Value("${firebase.web-api-key}") String webApiKey) {
+    public AuthService(JdbcUserRepository userRepository, JwtService jwtService,
+                       PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
-        this.firebaseAuthAdminClient = firebaseAuthAdminClient;
-        this.webApiKey = webApiKey;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public AuthResponse register(RegisterRequest request) {
@@ -49,10 +46,7 @@ public class AuthService {
             throw new ConflictException("Já existe um usuário cadastrado com este email");
         }
 
-        String uid = firebaseAuthAdminClient.createUser(request.email(), request.password(), request.name());
-
         User user = User.builder()
-                .id(uid)
                 .name(request.name())
                 .email(request.email())
                 .address(request.address())
@@ -63,58 +57,24 @@ public class AuthService {
                 .createdAt(new Date())
                 .build();
 
-        user = userRepository.save(user);
+        user = userRepository.insert(user, passwordEncoder.encode(request.password()));
 
         String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
         return new AuthResponse(token, UserResponse.from(user));
     }
 
     public AuthResponse login(LoginRequest request) {
-        String uid = verifyPasswordAndGetUid(request.email(), request.password());
+        String hash = userRepository.findPasswordHashByEmail(request.email())
+                .orElseThrow(() -> new UnauthorizedException("Email ou senha inválidos"));
 
-        User user = userRepository.findById(uid)
+        if (!passwordEncoder.matches(request.password(), hash)) {
+            throw new UnauthorizedException("Email ou senha inválidos");
+        }
+
+        User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new UnauthorizedException("Email ou senha inválidos"));
 
         String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
         return new AuthResponse(token, UserResponse.from(user));
-    }
-
-    /**
-     * Firebase Admin SDK has no server-side password-verification API, so we
-     * call the Identity Toolkit REST API directly (same trick the Firebase
-     * client SDKs use under the hood). A 200 with a {@code localId} means the
-     * credentials are valid - that localId IS the Firebase UID.
-     */
-    private String verifyPasswordAndGetUid(String email, String password) {
-        try {
-            String url = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + webApiKey;
-            String requestBody = objectMapper.writeValueAsString(Map.of(
-                    "email", email,
-                    "password", password,
-                    "returnSecureToken", true
-            ));
-
-            HttpRequest httpRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                JsonNode body = objectMapper.readTree(response.body());
-                return body.get("localId").asText();
-            }
-
-            // Firebase returns 400 with {"error":{"message":"INVALID_LOGIN_CREDENTIALS", ...}}
-            // for wrong password / unknown email - map straight to our 401 shape.
-            throw new UnauthorizedException("Email ou senha inválidos");
-        } catch (IOException | InterruptedException e) {
-            if (Thread.currentThread().isInterrupted()) {
-                Thread.currentThread().interrupt();
-            }
-            throw new RuntimeException("Erro ao autenticar com o Firebase: " + e.getMessage(), e);
-        }
     }
 }

@@ -1,0 +1,9 @@
+# Copie este arquivo para config/oracle.properties e preencha com as suas
+# credenciais. O arquivo real fica fora do git (ver .gitignore).
+#
+# Servidor Oracle da FIAP: usuario RM + matricula, senha entregue pelo
+# help desk. Para um Oracle local, troque a URL.
+
+spring.datasource.url=jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL
+spring.datasource.username=RM556163
+spring.datasource.password=SUA_SENHA_AQUI

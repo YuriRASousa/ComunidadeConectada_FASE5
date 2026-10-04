@@ -84,3 +84,52 @@ export interface ApiError {
   message: string;
   path: string;
 }
+
+// ---------------------------------------------------------------------
+// Fase 6: tudo abaixo e alimentado pelas procedures e functions PL/SQL.
+// O painel nao calcula nada disso, apenas le o que o Oracle gravou.
+// ---------------------------------------------------------------------
+
+export type LoanStatus = 'SOLICITADO' | 'ATIVO' | 'DEVOLVIDO' | 'CANCELADO';
+
+export interface Emprestimo {
+  id: string;
+  resourceId: string;
+  resourceTitle: string;
+  borrowerId: string;
+  borrowerName: string;
+  ownerName: string;
+  requestedAt: string | null;
+  dueAt: string | null;
+  returnedAt: string | null;
+  status: LoanStatus;
+  daysLate: number;
+}
+
+export interface Alerta {
+  id: string;
+  type: string;
+  referenceId: string | null;
+  severity: 'BAIXA' | 'MEDIA' | 'ALTA';
+  message: string;
+  createdAt: string | null;
+  resolved: boolean;
+}
+
+export interface ResumoUsuario {
+  userId: string;
+  userName: string;
+  yearMonth: number;
+  publishedResources: number;
+  lentOut: number;
+  borrowed: number;
+  lateReturns: number;
+  circularityIndex: number;
+  reputation: number;
+}
+
+export interface RotinaResultado {
+  routine: string;
+  affectedRows: number;
+  message: string;
+}

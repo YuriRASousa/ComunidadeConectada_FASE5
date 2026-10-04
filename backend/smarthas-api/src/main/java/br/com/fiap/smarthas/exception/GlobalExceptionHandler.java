@@ -1,8 +1,8 @@
 package br.com.fiap.smarthas.exception;
 
 import br.com.fiap.smarthas.dto.ErrorResponse;
-import com.google.firebase.auth.FirebaseAuthException;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -51,17 +51,30 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, message.isBlank() ? "Dados inválidos" : message, request);
     }
 
-    @ExceptionHandler(FirestoreOperationException.class)
-    public ResponseEntity<ErrorResponse> handleFirestore(FirestoreOperationException ex, HttpServletRequest request) {
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao acessar o Firestore: " + ex.getMessage(), request);
+    /**
+     * Regra recusada por uma procedure PL/SQL. O codigo ORA define o status:
+     * registro inexistente vira 404, estado invalido vira 409 e o restante
+     * cai em 400, sempre com a mensagem escrita dentro do banco.
+     */
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessRule(BusinessRuleException ex, HttpServletRequest request) {
+        HttpStatus status = switch (ex.getOracleCode()) {
+            case 20201, 20206, 20210 -> HttpStatus.NOT_FOUND;
+            case 20202, 20203, 20204, 20205, 20207, 20208 -> HttpStatus.CONFLICT;
+            default -> HttpStatus.BAD_REQUEST;
+        };
+        return build(status, ex.getMessage(), request);
     }
 
-    @ExceptionHandler(FirebaseAuthException.class)
-    public ResponseEntity<ErrorResponse> handleFirebaseAuth(FirebaseAuthException ex, HttpServletRequest request) {
-        if (ex.getAuthErrorCode() != null && "EMAIL_ALREADY_EXISTS".equals(ex.getAuthErrorCode().name())) {
-            return build(HttpStatus.CONFLICT, "Já existe um usuário cadastrado com este email", request);
+    /** Falha de acesso ao Oracle que nao veio de regra de negocio. */
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ErrorResponse> handleDataAccess(DataAccessException ex, HttpServletRequest request) {
+        RuntimeException traduzida = OracleErrors.translate(ex);
+        if (traduzida instanceof BusinessRuleException regra) {
+            return handleBusinessRule(regra, request);
         }
-        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR,
+                "Erro ao acessar o banco de dados Oracle: " + ex.getMostSpecificCause().getMessage(), request);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

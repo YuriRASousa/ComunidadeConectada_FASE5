@@ -1,6 +1,5 @@
 package br.com.fiap.smarthas.entity;
 
-import com.google.cloud.firestore.annotation.Exclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -10,7 +9,7 @@ import lombok.Setter;
 import java.util.Date;
 
 /**
- * Firestore document in the {@code messages} collection (auto-generated ID).
+ * Mensagem trocada entre dois moradores, linha da tabela SH_MENSAGEM.
  */
 @Getter
 @Setter
@@ -19,7 +18,6 @@ import java.util.Date;
 @Builder
 public class Message {
 
-    @Exclude
     private String id;
 
     private String senderId;

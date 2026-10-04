@@ -5,7 +5,7 @@ import br.com.fiap.smarthas.dto.user.UpdateUserRequest;
 import br.com.fiap.smarthas.dto.user.UserResponse;
 import br.com.fiap.smarthas.entity.User;
 import br.com.fiap.smarthas.exception.ResourceNotFoundException;
-import br.com.fiap.smarthas.repository.FirestoreUserRepository;
+import br.com.fiap.smarthas.repository.JdbcUserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -13,9 +13,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserService {
 
-    private final FirestoreUserRepository userRepository;
+    private final JdbcUserRepository userRepository;
 
-    public UserService(FirestoreUserRepository userRepository) {
+    public UserService(JdbcUserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
