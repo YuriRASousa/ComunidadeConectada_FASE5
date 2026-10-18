@@ -32,6 +32,9 @@ docs/*
 !docs/Slides_SmartHAS_Fase6.pdf
 !docs/Slides_SmartHAS_Fase6.pptx
 !docs/DER_SmartHAS_Fase6.png
+!docs/Relatorio_SmartHAS_Fase7.pdf
+!docs/Slides_SmartHAS_Fase7.pdf
+!docs/Slides_SmartHAS_Fase7.pptx
 
 # Configuracao de ferramenta local, nao faz parte da entrega
 .claude/
