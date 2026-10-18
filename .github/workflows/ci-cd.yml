@@ -69,17 +69,17 @@ jobs:
 
     steps:
       - name: Baixar o codigo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Instalar o JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
 
       - name: Instalar Python e o driver Oracle
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -103,7 +103,7 @@ jobs:
 
       - name: Guardar logs e relatorios
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: logs-e-relatorios-backend
           path: |
@@ -112,7 +112,7 @@ jobs:
           retention-days: 14
 
       - name: Guardar o jar empacotado
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: smarthas-api-jar
           path: backend/smarthas-api/target/smarthas-api-0.0.1-SNAPSHOT.jar
@@ -134,8 +134,8 @@ jobs:
             dir: mobile-react-native/SmartHASApp
             comando: npx tsc --noEmit
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -192,14 +192,14 @@ jobs:
       ORACLE_DEPLOY_PASSWORD: ${{ secrets.ORACLE_DEPLOY_PASSWORD }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -207,7 +207,7 @@ jobs:
       - run: pip install -r scripts/ci/requirements.txt
 
       - name: Baixar o jar gerado no build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: smarthas-api-jar
           path: deploy
@@ -261,7 +261,7 @@ jobs:
 
       - name: Guardar logs do deploy
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: logs-do-deploy
           path: logs/
