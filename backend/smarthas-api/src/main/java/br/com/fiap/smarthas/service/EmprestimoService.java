@@ -21,7 +21,7 @@ import java.util.List;
  *
  * <p>A decisao de permitir ou recusar o emprestimo (dono pedindo o proprio
  * item, recurso indisponivel, item de doacao, usuario inativo) mora dentro de
- * PRC_SH_REGISTRA_EMPRESTIMO. Assim a mesma regra vale para o aplicativo, para
+ * PKG_SH_EMPRESTIMO.REGISTRA_EMPRESTIMO. Assim a mesma regra vale para o aplicativo, para
  * o painel e para qualquer carga feita direto no banco.</p>
  */
 @Service
@@ -33,7 +33,7 @@ public class EmprestimoService {
         this.emprestimoRepository = emprestimoRepository;
     }
 
-    /** REST -> Java -> JDBC -> PRC_SH_REGISTRA_EMPRESTIMO. */
+    /** REST -> Java -> JDBC -> PKG_SH_EMPRESTIMO.REGISTRA_EMPRESTIMO. */
     public ProcedimentoResultado solicitar(String userId, EmprestimoRequest request) {
         return executar(() -> emprestimoRepository.registrarEmprestimo(
                 paraNumero(request.resourceId(), "recurso"),
@@ -41,7 +41,7 @@ public class EmprestimoService {
                 request.daysOrDefault()));
     }
 
-    /** REST -> Java -> JDBC -> PRC_SH_REGISTRA_DEVOLUCAO. */
+    /** REST -> Java -> JDBC -> PKG_SH_EMPRESTIMO.REGISTRA_DEVOLUCAO. */
     public ProcedimentoResultado devolver(String emprestimoId, DevolucaoRequest request) {
         return executar(() -> emprestimoRepository.registrarDevolucao(
                 paraNumero(emprestimoId, "empréstimo"),
@@ -57,14 +57,14 @@ public class EmprestimoService {
         return executar(emprestimoRepository::findEmAberto);
     }
 
-    /** Indicador vindo de FN_SH_INDICE_CIRCULARIDADE. */
+    /** Indicador vindo de PKG_SH_CALCULOS.INDICE_CIRCULARIDADE. */
     public BigDecimal indiceCircularidade(String userId, Integer anoMes) {
         int competencia = anoMes != null ? anoMes : competenciaAtual();
         return executar(() -> emprestimoRepository.indiceCircularidade(
                 paraNumero(userId, "usuário"), competencia));
     }
 
-    /** Ficha formatada vinda de FN_SH_FICHA_RECURSO. */
+    /** Ficha formatada vinda de PKG_SH_CALCULOS.FICHA_RECURSO. */
     public String fichaRecurso(String resourceId) {
         return executar(() -> emprestimoRepository.fichaRecurso(paraNumero(resourceId, "recurso")));
     }

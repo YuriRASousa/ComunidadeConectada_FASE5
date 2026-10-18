@@ -1,5 +1,5 @@
 -- =====================================================================
--- Smart HAS - Fase 6
+-- Smart HAS - Fase 7
 -- 99_drop.sql - remove tudo que os demais scripts criam
 --
 -- Util para reexecutar a carga do zero. Nao falha quando o objeto ainda
@@ -24,6 +24,16 @@ DECLARE
     END dropa;
 BEGIN
     -- Subprogramas primeiro, para nao travar em dependencia
+    -- Fase 7: triggers e pacotes (corpo e especificacao saem juntos)
+    dropa('DROP TRIGGER trg_sh_usuario_aud');
+    dropa('DROP TRIGGER trg_sh_emprestimo_aud');
+    dropa('DROP TRIGGER trg_sh_emprestimo_bu');
+    dropa('DROP PACKAGE pkg_sh_admin');
+    dropa('DROP PACKAGE pkg_sh_emprestimo');
+    dropa('DROP PACKAGE pkg_sh_calculos');
+    dropa('DROP PACKAGE pkg_sh_log');
+
+    -- Rotinas soltas da Fase 6 (so existem em banco nao migrado)
     dropa('DROP PROCEDURE prc_sh_gera_resumo_mensal');
     dropa('DROP PROCEDURE prc_sh_detecta_atrasos');
     dropa('DROP PROCEDURE prc_sh_registra_devolucao');
@@ -36,6 +46,8 @@ BEGIN
     dropa('DROP PROCEDURE prc_sh_grava_log');
 
     -- Tabelas na ordem inversa das dependencias
+    dropa('DROP TABLE sh_volumetria         CASCADE CONSTRAINTS');
+    dropa('DROP TABLE sh_auditoria          CASCADE CONSTRAINTS');
     dropa('DROP TABLE sh_resumo_usuario_mes CASCADE CONSTRAINTS');
     dropa('DROP TABLE sh_alerta             CASCADE CONSTRAINTS');
     dropa('DROP TABLE sh_avaliacao          CASCADE CONSTRAINTS');
@@ -47,6 +59,8 @@ BEGIN
     dropa('DROP TABLE sh_log_sistema        CASCADE CONSTRAINTS');
 
     -- Sequences
+    dropa('DROP SEQUENCE sq_sh_volumetria');
+    dropa('DROP SEQUENCE sq_sh_auditoria');
     dropa('DROP SEQUENCE sq_sh_log_sistema');
     dropa('DROP SEQUENCE sq_sh_alerta');
     dropa('DROP SEQUENCE sq_sh_avaliacao');

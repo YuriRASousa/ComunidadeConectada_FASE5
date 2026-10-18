@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Ponte entre o backend Java e as procedures PL/SQL do Smart HAS.
+ * Ponte entre o backend Java e as packages PL/SQL do Smart HAS.
  *
  * <p>Este e o ponto onde a Fase 6 encosta nas duas pontas: o aplicativo faz
  * uma chamada REST, o Spring cai aqui e a regra de negocio roda dentro do
@@ -39,7 +39,8 @@ public class JdbcEmprestimoRepository {
         this.jdbc = jdbc;
 
         this.chamadaRegistraEmprestimo = new SimpleJdbcCall(jdbc)
-                .withProcedureName("PRC_SH_REGISTRA_EMPRESTIMO")
+                .withCatalogName("PKG_SH_EMPRESTIMO")
+                .withProcedureName("REGISTRA_EMPRESTIMO")
                 .withoutProcedureColumnMetaDataAccess()
                 .declareParameters(
                         new SqlParameter("p_id_recurso", Types.NUMERIC),
@@ -49,7 +50,8 @@ public class JdbcEmprestimoRepository {
                         new SqlOutParameter("p_ds_retorno", Types.VARCHAR));
 
         this.chamadaRegistraDevolucao = new SimpleJdbcCall(jdbc)
-                .withProcedureName("PRC_SH_REGISTRA_DEVOLUCAO")
+                .withCatalogName("PKG_SH_EMPRESTIMO")
+                .withProcedureName("REGISTRA_DEVOLUCAO")
                 .withoutProcedureColumnMetaDataAccess()
                 .declareParameters(
                         new SqlParameter("p_id_emprestimo", Types.NUMERIC),
@@ -58,12 +60,14 @@ public class JdbcEmprestimoRepository {
                         new SqlOutParameter("p_ds_retorno", Types.VARCHAR));
 
         this.chamadaDetectaAtrasos = new SimpleJdbcCall(jdbc)
-                .withProcedureName("PRC_SH_DETECTA_ATRASOS")
+                .withCatalogName("PKG_SH_EMPRESTIMO")
+                .withProcedureName("DETECTA_ATRASOS")
                 .withoutProcedureColumnMetaDataAccess()
                 .declareParameters(new SqlOutParameter("p_qt_alertas", Types.NUMERIC));
 
         this.chamadaGeraResumo = new SimpleJdbcCall(jdbc)
-                .withProcedureName("PRC_SH_GERA_RESUMO_MENSAL")
+                .withCatalogName("PKG_SH_ADMIN")
+                .withProcedureName("GERA_RESUMO_MENSAL")
                 .withoutProcedureColumnMetaDataAccess()
                 .declareParameters(
                         new SqlParameter("p_nr_ano_mes", Types.NUMERIC),
@@ -94,7 +98,7 @@ public class JdbcEmprestimoRepository {
                    INNER JOIN sh_usuario  d ON (d.id_usuario = r.id_usuario)
             """;
 
-    /** Chama PRC_SH_REGISTRA_EMPRESTIMO. Toda validacao acontece no banco. */
+    /** Chama PKG_SH_EMPRESTIMO.REGISTRA_EMPRESTIMO. Toda validacao acontece no banco. */
     public ProcedimentoResultado registrarEmprestimo(long idRecurso, long idSolicitante, int dias) {
         Map<String, Object> retorno = chamadaRegistraEmprestimo.execute(new MapSqlParameterSource()
                 .addValue("p_id_recurso", idRecurso)
@@ -107,7 +111,7 @@ public class JdbcEmprestimoRepository {
                 (String) retorno.get("p_ds_retorno"));
     }
 
-    /** Chama PRC_SH_REGISTRA_DEVOLUCAO, com avaliacao opcional. */
+    /** Chama PKG_SH_EMPRESTIMO.REGISTRA_DEVOLUCAO, com avaliacao opcional. */
     public ProcedimentoResultado registrarDevolucao(long idEmprestimo, Integer nota, String comentario) {
         Map<String, Object> retorno = chamadaRegistraDevolucao.execute(new MapSqlParameterSource()
                 .addValue("p_id_emprestimo", idEmprestimo)
@@ -151,13 +155,13 @@ public class JdbcEmprestimoRepository {
     /** Indicador calculado pela function, exposto ao painel. */
     public BigDecimal indiceCircularidade(long idUsuario, int anoMes) {
         return jdbc.queryForObject(
-                "SELECT fn_sh_indice_circularidade(?, ?) FROM dual",
+                "SELECT pkg_sh_calculos.indice_circularidade(?, ?) FROM dual",
                 BigDecimal.class, idUsuario, anoMes);
     }
 
     /** Ficha formatada pela function, usada na tela de detalhe do item. */
     public String fichaRecurso(long idRecurso) {
         return jdbc.queryForObject(
-                "SELECT fn_sh_ficha_recurso(?) FROM dual", String.class, idRecurso);
+                "SELECT pkg_sh_calculos.ficha_recurso(?) FROM dual", String.class, idRecurso);
     }
 }

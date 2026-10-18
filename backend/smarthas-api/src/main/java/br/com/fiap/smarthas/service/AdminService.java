@@ -2,8 +2,10 @@ package br.com.fiap.smarthas.service;
 
 import br.com.fiap.smarthas.dto.admin.AdminStatsResponse;
 import br.com.fiap.smarthas.dto.admin.AlertaResponse;
+import br.com.fiap.smarthas.dto.admin.RecursoBuscaResponse;
 import br.com.fiap.smarthas.dto.admin.ResumoUsuarioResponse;
 import br.com.fiap.smarthas.dto.admin.RotinaResponse;
+import br.com.fiap.smarthas.dto.admin.VolumetriaResponse;
 import br.com.fiap.smarthas.dto.emprestimo.EmprestimoResponse;
 import br.com.fiap.smarthas.entity.enums.Category;
 import br.com.fiap.smarthas.exception.OracleErrors;
@@ -79,7 +81,7 @@ public class AdminService {
      */
     public RotinaResponse detectarAtrasos() {
         int alertas = executar(emprestimoRepository::detectarAtrasos);
-        return new RotinaResponse("PRC_SH_DETECTA_ATRASOS", alertas,
+        return new RotinaResponse("PKG_SH_EMPRESTIMO.DETECTA_ATRASOS", alertas,
                 alertas == 0 ? "Nenhum empréstimo vencido no momento"
                              : "Alertas de atraso abertos: " + alertas);
     }
@@ -91,13 +93,32 @@ public class AdminService {
     public RotinaResponse gerarResumoMensal(Integer anoMes) {
         int competencia = anoMes != null ? anoMes : EmprestimoService.competenciaAtual();
         int linhas = executar(() -> emprestimoRepository.gerarResumoMensal(competencia));
-        return new RotinaResponse("PRC_SH_GERA_RESUMO_MENSAL", linhas,
+        return new RotinaResponse("PKG_SH_ADMIN.GERA_RESUMO_MENSAL", linhas,
                 "Resumo de " + competencia + " recarregado com " + linhas + " linhas");
     }
 
     public List<ResumoUsuarioResponse> resumoMensal(Integer anoMes) {
         int competencia = anoMes != null ? anoMes : EmprestimoService.competenciaAtual();
         return executar(() -> painelRepository.resumoDoMes(competencia));
+    }
+
+    /** SQL dinamico: mede o tamanho de todas as tabelas do projeto. */
+    public RotinaResponse coletarVolumetria() {
+        int tabelas = executar(painelRepository::coletarVolumetria);
+        return new RotinaResponse("PKG_SH_ADMIN.PRC_VOLUMETRIA", tabelas,
+                "Volumetria coletada para " + tabelas + " tabelas");
+    }
+
+    public List<VolumetriaResponse> volumetriaAtual() {
+        return executar(painelRepository::volumetriaAtual);
+    }
+
+    /** SQL dinamico: filtros opcionais montados em tempo real no banco. */
+    public List<RecursoBuscaResponse> buscarRecursos(Long categoria, String tipo, String disponibilidade,
+                                                     String texto, Double lat, Double lon, Double raioKm,
+                                                     String ordem) {
+        return executar(() -> painelRepository.buscarRecursos(
+                categoria, tipo, disponibilidade, texto, lat, lon, raioKm, ordem));
     }
 
     private <T> T executar(java.util.function.Supplier<T> chamada) {

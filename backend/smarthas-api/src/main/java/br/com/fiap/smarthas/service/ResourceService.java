@@ -41,7 +41,7 @@ public class ResourceService {
 
     /**
      * Vitrine ordenada por proximidade. A distancia e calculada pela function
-     * FN_SH_DISTANCIA_KM dentro do Oracle, entao a ordenacao vale igual para o
+     * PKG_SH_CALCULOS.DISTANCIA_KM dentro do Oracle, entao a ordenacao vale igual para o
      * aplicativo e para o painel.
      */
     public List<ResourceResponse> getNearby(double latitude, double longitude, int limit) {

@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  * <p>Uma procedure que recusa a operacao devolve algo como:</p>
  * <pre>
  * ORA-20205: O recurso 1 esta RESERVADO no momento.
- * ORA-06512: at "RM556163.PRC_SH_REGISTRA_EMPRESTIMO", line 120
+ * ORA-06512: at "RM556163.PKG_SH_EMPRESTIMO", line 120
  * </pre>
  * <p>Sem tratamento, essa pilha inteira chegaria na tela do morador. Aqui
  * ficamos apenas com a primeira linha, que e a mensagem escrita para o

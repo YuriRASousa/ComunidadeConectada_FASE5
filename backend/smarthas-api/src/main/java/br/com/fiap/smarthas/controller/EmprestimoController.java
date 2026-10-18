@@ -35,7 +35,7 @@ public class EmprestimoController {
     }
 
     @PostMapping
-    @Operation(summary = "Solicita um emprestimo (executa PRC_SH_REGISTRA_EMPRESTIMO)")
+    @Operation(summary = "Solicita um emprestimo (executa PKG_SH_EMPRESTIMO.REGISTRA_EMPRESTIMO)")
     public ResponseEntity<ProcedimentoResultado> solicitar(Authentication authentication,
                                                            @Valid @RequestBody EmprestimoRequest request) {
         ProcedimentoResultado resultado =
@@ -44,7 +44,7 @@ public class EmprestimoController {
     }
 
     @PostMapping("/{id}/devolucao")
-    @Operation(summary = "Registra a devolucao (executa PRC_SH_REGISTRA_DEVOLUCAO)")
+    @Operation(summary = "Registra a devolucao (executa PKG_SH_EMPRESTIMO.REGISTRA_DEVOLUCAO)")
     public ResponseEntity<ProcedimentoResultado> devolver(@PathVariable String id,
                                                           @Valid @RequestBody(required = false) DevolucaoRequest request) {
         return ResponseEntity.ok(emprestimoService.devolver(id, request));
@@ -57,7 +57,7 @@ public class EmprestimoController {
     }
 
     @GetMapping("/indice-circularidade")
-    @Operation(summary = "Indicador calculado por FN_SH_INDICE_CIRCULARIDADE")
+    @Operation(summary = "Indicador calculado por PKG_SH_CALCULOS.INDICE_CIRCULARIDADE")
     public ResponseEntity<Map<String, Object>> indice(Authentication authentication,
                                                       @RequestParam(required = false) Integer anoMes) {
         int competencia = anoMes != null ? anoMes : EmprestimoService.competenciaAtual();
@@ -67,7 +67,7 @@ public class EmprestimoController {
     }
 
     @GetMapping("/ficha/{resourceId}")
-    @Operation(summary = "Ficha do item formatada por FN_SH_FICHA_RECURSO")
+    @Operation(summary = "Ficha do item formatada por PKG_SH_CALCULOS.FICHA_RECURSO")
     public ResponseEntity<Map<String, String>> ficha(@PathVariable String resourceId) {
         return ResponseEntity.ok(Map.of("ficha", emprestimoService.fichaRecurso(resourceId)));
     }

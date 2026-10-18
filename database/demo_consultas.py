@@ -107,31 +107,31 @@ SELECT object_type, COUNT(*) AS qtd
     passo(2, "Functions dentro de um SELECT",
           "Reputacao e indice de circularidade calculados pelo banco, por morador.",
           """SELECT nm_usuario,
-       fn_sh_reputacao(id_usuario)                        AS reputacao,
-       fn_sh_indice_circularidade(id_usuario,
+       pkg_sh_calculos.reputacao(id_usuario)                        AS reputacao,
+       pkg_sh_calculos.indice_circularidade(id_usuario,
            TO_NUMBER(TO_CHAR(SYSDATE,'YYYYMM')))          AS circularidade
   FROM sh_usuario WHERE st_usuario = 'A'
  ORDER BY 3 DESC, 1;""")
     c, l = roda(cur, """
         SELECT nm_usuario,
-               fn_sh_reputacao(id_usuario),
-               fn_sh_indice_circularidade(id_usuario, TO_NUMBER(TO_CHAR(SYSDATE,'YYYYMM')))
+               pkg_sh_calculos.reputacao(id_usuario),
+               pkg_sh_calculos.indice_circularidade(id_usuario, TO_NUMBER(TO_CHAR(SYSDATE,'YYYYMM')))
           FROM sh_usuario WHERE st_usuario = 'A' ORDER BY 3 DESC, 1""")
     tabela(["nm_usuario", "reputacao", "circularidade"], l)
 
     # 3 -------------------------------------------------------------------
     passo(3, "Function de dados formatados",
           "A ficha que o aplicativo mostra na tela do item vem pronta do banco.",
-          """SELECT fn_sh_ficha_recurso(id_recurso) AS ficha
+          """SELECT pkg_sh_calculos.ficha_recurso(id_recurso) AS ficha
   FROM sh_recurso WHERE ds_disponibilidade = 'DISPONIVEL'
  FETCH FIRST 3 ROWS ONLY;""")
-    c, l = roda(cur, """SELECT fn_sh_ficha_recurso(id_recurso) FROM sh_recurso
+    c, l = roda(cur, """SELECT pkg_sh_calculos.ficha_recurso(id_recurso) FROM sh_recurso
                         WHERE ds_disponibilidade = 'DISPONIVEL' FETCH FIRST 3 ROWS ONLY""")
     tabela(["ficha"], l)
 
     # 4 -------------------------------------------------------------------
     passo(4, "Os emprestimos mais recentes",
-          "Quando o app pede um item, a procedure PRC_SH_REGISTRA_EMPRESTIMO grava a linha aqui.",
+          "Quando o app pede um item, a procedure PKG_SH_EMPRESTIMO.REGISTRA_EMPRESTIMO grava a linha aqui.",
           """SELECT e.id_emprestimo, r.nm_recurso, u.nm_usuario AS solicitante,
        e.st_emprestimo, TO_CHAR(e.dt_prev_devolucao,'DD/MM/YYYY') AS devolver_ate
   FROM sh_emprestimo e
@@ -149,7 +149,7 @@ SELECT object_type, COUNT(*) AS qtd
 
     # 5 -------------------------------------------------------------------
     passo(5, "Alertas abertos pela rotina de atrasos",
-          "PRC_SH_DETECTA_ATRASOS percorreu os vencidos com cursor e gravou aqui.",
+          "PKG_SH_EMPRESTIMO.DETECTA_ATRASOS percorreu os vencidos com cursor e gravou aqui.",
           """SELECT ds_severidade, ds_mensagem
   FROM sh_alerta WHERE fl_resolvido = 'N'
  ORDER BY DECODE(ds_severidade,'ALTA',1,'MEDIA',2,3);""")

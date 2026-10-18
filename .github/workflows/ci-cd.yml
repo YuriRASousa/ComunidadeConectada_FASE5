@@ -1,0 +1,268 @@
+# =====================================================================
+# Smart HAS - Pipeline de CI/CD (Fase 7)
+#
+#   banco-e-backend  sobe um Oracle Free como servico, instala o schema
+#                    (tabelas, pacotes PL/SQL, triggers), compila o
+#                    backend e roda os testes de integracao contra ele.
+#   frontend         compila o painel Angular e confere os tipos do app
+#                    React Native, em paralelo.
+#   deploy           so na main: sobe o jar empacotado contra um Oracle
+#                    limpo, faz um teste de fumaca na API, publica a imagem
+#                    Docker no GitHub Container Registry e, se houver
+#                    segredos configurados, aplica o schema no Oracle real.
+#
+# Logs e relatorios: cada job escreve um resumo na aba do run e guarda os
+# logs do banco, os relatorios do Surefire e o jar como artefatos.
+# =====================================================================
+name: Smart HAS CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  JAVA_VERSION: "21"
+  NODE_VERSION: "22"
+  # Oracle descartavel que existe so durante o job. Nao e credencial real.
+  CI_DB_USER: smarthas
+  CI_DB_PASSWORD: SmartHAS_ci_2026
+  CI_DB_SERVICE: FREEPDB1
+
+jobs:
+  banco-e-backend:
+    name: Banco Oracle + Backend (build e testes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      oracle:
+        image: gvenzl/oracle-free:23-slim-faststart
+        env:
+          ORACLE_PASSWORD: SmartHAS_ci_2026
+          APP_USER: smarthas
+          APP_USER_PASSWORD: SmartHAS_ci_2026
+        ports:
+          - 1521:1521
+        options: >-
+          --health-cmd healthcheck.sh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 30
+          --health-start-period 40s
+
+    env:
+      ORACLE_USER: smarthas
+      ORACLE_PASSWORD: SmartHAS_ci_2026
+      ORACLE_DSN: localhost:1521/FREEPDB1
+      ORACLE_URL: jdbc:oracle:thin:@//localhost:1521/FREEPDB1
+      SMARTHAS_DB_TESTS: "true"
+
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar o JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Instalar Python e o driver Oracle
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/ci/requirements.txt
+      - run: pip install -r scripts/ci/requirements.txt
+
+      - name: Instalar o schema no Oracle (tabelas, carga, pacotes e triggers)
+        run: |
+          mkdir -p logs
+          python database/executar_scripts.py 2>&1 | tee logs/banco-instalacao.log
+
+      - name: Build e testes automatizados do backend
+        working-directory: backend/smarthas-api
+        run: |
+          chmod +x mvnw
+          ./mvnw -B verify 2>&1 | tee ../../logs/backend-maven.log
+
+      - name: Resumo dos testes
+        if: always()
+        run: python scripts/ci/resumo_testes.py backend/smarthas-api/target/surefire-reports >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar logs e relatorios
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-e-relatorios-backend
+          path: |
+            logs/
+            backend/smarthas-api/target/surefire-reports/
+          retention-days: 14
+
+      - name: Guardar o jar empacotado
+        uses: actions/upload-artifact@v4
+        with:
+          name: smarthas-api-jar
+          path: backend/smarthas-api/target/smarthas-api-0.0.1-SNAPSHOT.jar
+          if-no-files-found: error
+          retention-days: 14
+
+  frontend:
+    name: ${{ matrix.nome }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nome: Painel Angular (build)
+            dir: web/smarthas-admin
+            comando: npx ng build
+          - nome: App React Native (tipos)
+            dir: mobile-react-native/SmartHASApp
+            comando: npx tsc --noEmit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ matrix.dir }}/package-lock.json
+      - name: Instalar dependencias
+        working-directory: ${{ matrix.dir }}
+        run: npm ci --no-audit --no-fund
+      - name: ${{ matrix.nome }}
+        working-directory: ${{ matrix.dir }}
+        run: |
+          mkdir -p ../../logs
+          ${{ matrix.comando }} 2>&1 | tee ../../logs/frontend.log
+      - name: Resumo
+        if: always()
+        run: |
+          echo "### ${{ matrix.nome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          tail -n 25 logs/frontend.log >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy (smoke test, imagem Docker e Oracle)
+    needs: [banco-e-backend, frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+
+    services:
+      oracle:
+        image: gvenzl/oracle-free:23-slim-faststart
+        env:
+          ORACLE_PASSWORD: SmartHAS_ci_2026
+          APP_USER: smarthas
+          APP_USER_PASSWORD: SmartHAS_ci_2026
+        ports:
+          - 1521:1521
+        options: >-
+          --health-cmd healthcheck.sh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 30
+          --health-start-period 40s
+
+    env:
+      ORACLE_USER: smarthas
+      ORACLE_PASSWORD: SmartHAS_ci_2026
+      ORACLE_DSN: localhost:1521/FREEPDB1
+      # Destino real, opcional. Sem esses segredos o passo de Oracle e pulado.
+      ORACLE_DEPLOY_DSN: ${{ secrets.ORACLE_DEPLOY_DSN }}
+      ORACLE_DEPLOY_USER: ${{ secrets.ORACLE_DEPLOY_USER }}
+      ORACLE_DEPLOY_PASSWORD: ${{ secrets.ORACLE_DEPLOY_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/ci/requirements.txt
+      - run: pip install -r scripts/ci/requirements.txt
+
+      - name: Baixar o jar gerado no build
+        uses: actions/download-artifact@v4
+        with:
+          name: smarthas-api-jar
+          path: deploy
+
+      - name: Instalar o schema no Oracle de homologacao
+        run: |
+          mkdir -p logs
+          python database/executar_scripts.py 2>&1 | tee logs/deploy-banco.log
+
+      - name: Subir a API empacotada contra o Oracle
+        run: |
+          ORACLE_URL=jdbc:oracle:thin:@//localhost:1521/FREEPDB1 \
+          JWT_SECRET=ci-smoke-test-secret-com-mais-de-trinta-e-dois-bytes-ok \
+            nohup java -jar deploy/smarthas-api-0.0.1-SNAPSHOT.jar > logs/api.log 2>&1 &
+          echo "API iniciada (pid $!)"
+
+      - name: Teste de fumaca (API + Oracle ponta a ponta)
+        run: bash scripts/ci/smoke_test.sh http://localhost:8080 | tee logs/smoke-test.log
+
+      - name: Publicar a imagem no GitHub Container Registry
+        run: |
+          IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/smarthas-api
+          docker build -t "$IMAGE:${GITHUB_SHA::7}" -t "$IMAGE:latest" \
+            -f backend/smarthas-api/Dockerfile backend/smarthas-api
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker push "$IMAGE:${GITHUB_SHA::7}"
+          docker push "$IMAGE:latest"
+          echo "### Imagem publicada" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`$IMAGE:${GITHUB_SHA::7}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Aplicar o schema no Oracle de destino (se configurado)
+        if: env.ORACLE_DEPLOY_DSN != ''
+        env:
+          ORACLE_USER: ${{ secrets.ORACLE_DEPLOY_USER }}
+          ORACLE_PASSWORD: ${{ secrets.ORACLE_DEPLOY_PASSWORD }}
+          ORACLE_DSN: ${{ secrets.ORACLE_DEPLOY_DSN }}
+        run: python database/executar_scripts.py --migrar 2>&1 | tee logs/deploy-oracle-destino.log
+
+      - name: Registrar o que foi (ou nao foi) implantado
+        if: always()
+        run: |
+          {
+            echo "### Resultado do deploy"
+            echo "- Smoke test contra Oracle Free: $(grep -c '^OK' logs/smoke-test.log 2>/dev/null || echo 0) verificacoes aprovadas"
+            if [ -z "$ORACLE_DEPLOY_DSN" ]; then
+              echo "- Oracle de destino: **pulado** (segredos ORACLE_DEPLOY_* nao configurados)"
+            else
+              echo "- Oracle de destino: schema aplicado com executar_scripts.py --migrar"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar logs do deploy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-do-deploy
+          path: logs/
+          retention-days: 14

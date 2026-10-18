@@ -1,10 +1,11 @@
 -- =====================================================================
--- Smart HAS / ComunidadeConectada - Fase 6
+-- Smart HAS / ComunidadeConectada - Fase 7
 -- 01_ddl.sql - modelo fisico Oracle
 --
--- Ordem de execucao: 01_ddl.sql, 02_seed.sql, 03_log.sql,
--- 04_functions.sql, 05_procedures.sql. Para recomecar do zero, rode
--- 99_drop.sql antes.
+-- Ordem de execucao: 01_ddl.sql, 02_seed.sql, 03_pkg_log.sql,
+-- 04_pkg_calculos.sql, 05_pkg_emprestimo.sql, 06_pkg_admin.sql,
+-- 07_triggers.sql. Tudo isso o script executar_scripts.py faz sozinho.
+-- Para recomecar do zero, rode 99_drop.sql antes.
 --
 -- Prefixo SH_ (Smart HAS) em todos os objetos, para o schema do aluno
 -- nao se misturar com o projeto DBurger usado nas aulas.
@@ -209,6 +210,42 @@ CREATE TABLE sh_log_sistema (
 COMMENT ON TABLE sh_log_sistema IS 'Log das procedures e functions do Smart HAS.';
 
 -- ---------------------------------------------------------------------
+-- SH_AUDITORIA (Fase 7): trilha de quem mudou o que. Alimentada pelas
+-- triggers de SH_EMPRESTIMO e SH_USUARIO. Diferente do log, o registro
+-- participa da transacao: se a alteracao sofrer rollback, a linha de
+-- auditoria some junto, entao a trilha nunca descreve algo que nao houve.
+-- ---------------------------------------------------------------------
+CREATE TABLE sh_auditoria (
+    id_auditoria  NUMBER(12)     NOT NULL,
+    nm_tabela     VARCHAR2(30)   NOT NULL,
+    tp_operacao   VARCHAR2(10)   NOT NULL,
+    id_registro   NUMBER(10),
+    nm_usuario_bd VARCHAR2(60)   NOT NULL,
+    dt_evento     DATE           DEFAULT SYSDATE NOT NULL,
+    ds_antes      VARCHAR2(1000),
+    ds_depois     VARCHAR2(1000),
+    CONSTRAINT pk_sh_auditoria PRIMARY KEY (id_auditoria),
+    CONSTRAINT ck_sh_auditoria_op CHECK (tp_operacao IN ('INSERT','UPDATE','DELETE'))
+);
+
+COMMENT ON TABLE sh_auditoria IS 'Trilha de auditoria preenchida por triggers. Nunca guarda senha ou hash.';
+
+-- ---------------------------------------------------------------------
+-- SH_VOLUMETRIA (Fase 7): fotografia do tamanho de cada tabela, gravada
+-- por PKG_SH_ADMIN.PRC_VOLUMETRIA com SQL dinamico. Serve para ver o
+-- crescimento do banco ao longo do tempo (e prever custo na nuvem).
+-- ---------------------------------------------------------------------
+CREATE TABLE sh_volumetria (
+    id_volumetria NUMBER(12)   NOT NULL,
+    dt_coleta     DATE         NOT NULL,
+    nm_tabela     VARCHAR2(30) NOT NULL,
+    qt_linhas     NUMBER(12)   NOT NULL,
+    CONSTRAINT pk_sh_volumetria PRIMARY KEY (id_volumetria)
+);
+
+COMMENT ON TABLE sh_volumetria IS 'Quantidade de linhas por tabela em cada coleta.';
+
+-- ---------------------------------------------------------------------
 -- Sequences
 -- ---------------------------------------------------------------------
 CREATE SEQUENCE sq_sh_categoria   START WITH 1 INCREMENT BY 1 NOCACHE;
@@ -219,6 +256,8 @@ CREATE SEQUENCE sq_sh_emprestimo  START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE sq_sh_avaliacao   START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE sq_sh_alerta      START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE sq_sh_log_sistema START WITH 1 INCREMENT BY 1 NOCACHE;
+CREATE SEQUENCE sq_sh_auditoria   START WITH 1 INCREMENT BY 1 NOCACHE;
+CREATE SEQUENCE sq_sh_volumetria  START WITH 1 INCREMENT BY 1 NOCACHE;
 
 -- ---------------------------------------------------------------------
 -- Indices de apoio as consultas mais frequentes do app e do painel
@@ -229,5 +268,7 @@ CREATE INDEX ix_sh_emprestimo_status  ON sh_emprestimo (st_emprestimo, dt_prev_d
 CREATE INDEX ix_sh_emprestimo_recurso ON sh_emprestimo (id_recurso);
 CREATE INDEX ix_sh_mensagem_par       ON sh_mensagem (id_remetente, id_destinatario, dt_envio);
 CREATE INDEX ix_sh_alerta_tipo        ON sh_alerta (ds_tipo, fl_resolvido);
+CREATE INDEX ix_sh_auditoria_registro ON sh_auditoria (nm_tabela, id_registro, dt_evento);
+CREATE INDEX ix_sh_volumetria_coleta  ON sh_volumetria (dt_coleta, nm_tabela);
 
 COMMIT;

@@ -197,14 +197,14 @@ public class JdbcResourceRepository {
     }
 
     /**
-     * Vitrine ordenada por proximidade. Usa a function FN_SH_DISTANCIA_KM,
+     * Vitrine ordenada por proximidade. Usa a function PKG_SH_CALCULOS.DISTANCIA_KM,
      * entao a regra de distancia fica no banco e vale igual para o aplicativo
      * e para o painel.
      */
     public List<Resource> findNearby(double latitude, double longitude, int limite) {
         return jdbc.query(SELECT_BASE + """
                  WHERE r.ds_disponibilidade = 'DISPONIVEL'
-                 ORDER BY fn_sh_distancia_km(?, ?, r.vl_latitude, r.vl_longitude) NULLS LAST
+                 ORDER BY pkg_sh_calculos.distancia_km(?, ?, r.vl_latitude, r.vl_longitude) NULLS LAST
                 FETCH FIRST ? ROWS ONLY
                 """, mapper, latitude, longitude, limite);
     }

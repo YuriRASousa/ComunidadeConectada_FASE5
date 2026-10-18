@@ -59,8 +59,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessRuleException.class)
     public ResponseEntity<ErrorResponse> handleBusinessRule(BusinessRuleException ex, HttpServletRequest request) {
         HttpStatus status = switch (ex.getOracleCode()) {
-            case 20201, 20206, 20210 -> HttpStatus.NOT_FOUND;
-            case 20202, 20203, 20204, 20205, 20207, 20208 -> HttpStatus.CONFLICT;
+            case 20201, 20206, 20210, 20401 -> HttpStatus.NOT_FOUND;
+            case 20202, 20203, 20204, 20205, 20207, 20208, 20301, 20302 -> HttpStatus.CONFLICT;
             default -> HttpStatus.BAD_REQUEST;
         };
         return build(status, ex.getMessage(), request);

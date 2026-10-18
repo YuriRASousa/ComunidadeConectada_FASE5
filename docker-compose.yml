@@ -1,0 +1,37 @@
+# Ambiente completo na maquina do desenvolvedor: Oracle Free + API.
+#
+#   docker compose up --build
+#
+# O Oracle sobe vazio. Para instalar o schema (tabelas, carga, pacotes e
+# triggers) rode, com o banco de pe:
+#   ORACLE_USER=smarthas ORACLE_PASSWORD=smarthas ORACLE_DSN=localhost:1521/FREEPDB1 \
+#     python database/executar_scripts.py
+# Dados de acesso abaixo valem so para este ambiente local descartavel.
+services:
+  oracle:
+    image: gvenzl/oracle-free:23-slim-faststart
+    environment:
+      ORACLE_PASSWORD: smarthas
+      APP_USER: smarthas
+      APP_USER_PASSWORD: smarthas
+    ports:
+      - "1521:1521"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+
+  api:
+    build: backend/smarthas-api
+    depends_on:
+      oracle:
+        condition: service_healthy
+    environment:
+      ORACLE_URL: jdbc:oracle:thin:@//oracle:1521/FREEPDB1
+      ORACLE_USER: smarthas
+      ORACLE_PASSWORD: smarthas
+      JWT_SECRET: troque-este-segredo-local-com-mais-de-32-bytes-0123456789
+    ports:
+      - "8080:8080"
